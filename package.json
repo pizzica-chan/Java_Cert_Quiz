@@ -1,0 +1,18 @@
+{
+  "name": "java-silver-quiz",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && npm run verify:java && vite build",
+    "verify:java": "tsx scripts/verify-java.mts",
+    "verify:questions": "tsx scripts/validate-questions.mts",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7"
+  }
+}
