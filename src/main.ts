@@ -64,6 +64,107 @@ function shuffle<T>(array: T[]): T[] {
   return copy;
 }
 
+/** 論点ごとに「前回出題した亜種」を覚えておくキー */
+const LAST_VARIANT_KEY = "java-silver-quiz-last-variants";
+
+function loadLastVariants(): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(LAST_VARIANT_KEY);
+    const parsed = raw ? (JSON.parse(raw) as unknown) : null;
+    return typeof parsed === "object" && parsed !== null ? (parsed as Record<string, number>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveLastVariants(map: Record<string, number>): void {
+  try {
+    localStorage.setItem(LAST_VARIANT_KEY, JSON.stringify(map));
+  } catch {
+    // プライベートモードや容量超過は無視する（出題自体は続けられる）
+  }
+}
+
+/**
+ * 同じ論点（variantOf）の亜種からは 1 問だけを選ぶ。
+ * その際、前回出題した亜種は候補から外すため、続けて解いても同じ問題は出てこない。
+ * 亜種を一巡したら、また全体から選び直す。
+ */
+function pickOnePerConcept(pool: SilverQuestion[]): SilverQuestion[] {
+  const groups = new Map<string, SilverQuestion[]>();
+  const picked: SilverQuestion[] = [];
+
+  for (const question of pool) {
+    if (!question.variantOf) {
+      picked.push(question);
+      continue;
+    }
+    const list = groups.get(question.variantOf) ?? [];
+    list.push(question);
+    groups.set(question.variantOf, list);
+  }
+
+  const lastVariants = loadLastVariants();
+
+  for (const [key, variants] of groups) {
+    const notLastTime = variants.filter((v) => v.id !== lastVariants[key]);
+    const candidates = notLastTime.length > 0 ? notLastTime : variants;
+    const chosen = candidates[Math.floor(Math.random() * candidates.length)]!;
+    lastVariants[key] = chosen.id;
+    picked.push(chosen);
+  }
+
+  saveLastVariants(lastVariants);
+  return picked;
+}
+
+/**
+ * 同じ分野の問題が並ばないように配置する。
+ * 残りが多い分野から順に、直前と違う分野を選んで詰めていく。
+ * 単一分野の練習など、分散しようがない場合はそのまま並べる。
+ */
+function spreadByTopic(items: SilverQuestion[]): SilverQuestion[] {
+  const buckets = new Map<ExamTopic, SilverQuestion[]>();
+  for (const question of items) {
+    const list = buckets.get(question.topic) ?? [];
+    list.push(question);
+    buckets.set(question.topic, list);
+  }
+
+  const result: SilverQuestion[] = [];
+  let lastTopic: ExamTopic | null = null;
+
+  while (result.length < items.length) {
+    let chosen: ExamTopic | null = null;
+    let mostRemaining = 0;
+
+    // 直前と違う分野のうち、残りが最も多いものを選ぶ（偏りを最後まで残さない）
+    for (const [topic, list] of buckets) {
+      if (list.length === 0 || topic === lastTopic) continue;
+      if (list.length > mostRemaining) {
+        chosen = topic;
+        mostRemaining = list.length;
+      }
+    }
+
+    // 直前と同じ分野しか残っていない場合は、やむを得ずそれを続ける
+    if (chosen === null) {
+      for (const [topic, list] of buckets) {
+        if (list.length > 0) {
+          chosen = topic;
+          break;
+        }
+      }
+    }
+    if (chosen === null) break;
+
+    result.push(buckets.get(chosen)!.shift()!);
+    lastTopic = chosen;
+  }
+
+  return result;
+}
+
 /**
  * 選択肢の並びをシャッフルし、正解のインデックスも追随させる。
  * 同じ問題を繰り返し解いたときに「正解の位置」で覚えてしまうのを防ぐ。
@@ -485,9 +586,13 @@ function renderResult(): void {
 
 function startQuiz(mode: Mode): void {
   const pool = mode === "exam" ? questions : questionsByTopic(state.topic);
-  const picked = shuffle(pool)
-    .slice(0, mode === "exam" ? EXAM.questionCount : pool.length)
-    .map(shuffleChoices);
+  // 論点ごとに亜種を1問だけ選び、シャッフルしてから同じ分野が並ばないように配置する
+  const perConcept = pickOnePerConcept(pool);
+  const limited = shuffle(perConcept).slice(
+    0,
+    mode === "exam" ? EXAM.questionCount : perConcept.length,
+  );
+  const picked = spreadByTopic(limited).map(shuffleChoices);
 
   state.mode = mode;
   state.quizQuestions = picked;

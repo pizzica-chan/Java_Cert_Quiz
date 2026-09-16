@@ -1,7 +1,10 @@
-# Java Silver SE 11 対策クイズ
+# Java 認定資格 対策クイズ
 
-Oracle Certified Java Programmer, Silver SE 11（1Z0-815-JPN）の出題範囲に沿った練習問題アプリです。
+Oracle Certified Java Programmer の出題範囲に沿った練習問題アプリです。
 フロントエンド完結（静的ファイルのみ）で動作します。
+
+現在収録しているのは **Silver SE 11（1Z0-815-JPN）** です。
+Gold など他の試験区分を追加できるよう、問題は試験ごとのディレクトリ（`src/silver/`）に分けています。
 
 ## 特徴
 

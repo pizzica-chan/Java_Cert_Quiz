@@ -52,6 +52,13 @@ export type ExpectedResult =
 export interface SilverQuestion {
   id: number;
   topic: ExamTopic;
+  /**
+   * 同じ論点の亜種をまとめるキー（例: "datatypes-compound-assign"）。
+   * 同じキーを持つ問題は「同じ論点を別の切り口・別の値で問うたもの」とみなし、
+   * 出題時はその中から 1 問だけがランダムに選ばれる。
+   * 繰り返し解いたときに答えそのものを丸暗記できないようにするための仕組み。
+   */
+  variantOf?: string;
   /** 問題文。本試験に倣い「結果はどれか」「正しい記述はどれか」などの問い方にする */
   question: string;
   /** 提示コード（1行1要素）。省略時は文章だけの問題 */

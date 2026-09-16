@@ -4,8 +4,14 @@
 
 ## プロジェクト概要
 
-Oracle Certified Java Programmer, Silver SE 11（1Z0-815-JPN）の対策クイズアプリ。
+Oracle Certified Java Programmer の対策クイズアプリ。
 フロントエンド完結（TypeScript + Vite、バニラ DOM）。詳細は [README.md](README.md) 参照。
+
+現在収録しているのは Silver SE 11（1Z0-815-JPN）のみだが、**将来 Gold などを追加する前提の構成**にしている。
+
+- 試験区分ごとに問題を分ける: Silver は [src/silver/](src/silver/)、Gold を作るなら `src/gold/`
+- [src/questions.ts](src/questions.ts) が全試験を結合する集約点。ここに新しい試験区分を足す
+- 出題範囲の型（`ExamTopic`）は現在 Silver 専用。Gold 追加時は試験区分ごとにトピックを分ける必要がある
 
 このプロジェクトの価値は **「正解が実機で裏取りされていること」** にある。
 その前提が崩れる変更（検証のスキップ、`not-verifiable` の濫用）は、アプリの存在意義を損なう。
@@ -60,6 +66,20 @@ expected: { kind: "exception", type: "ClassCastException" } // 実行時にこ�
 - 誤答の選択肢は、典型的な勘違いに対応させる（ありえない値を並べない）
 - 解説は「なぜそうなるか」を仕様に基づいて書く。結論だけ書かない
 
+### 解説の深さ
+
+解説は試験対策の暗記事項の列挙にとどめず、**本質的な理解を助ける内容を目指す**（必須ではないが望ましい）。
+目安として、次の 3 つを意識する。
+
+1. **何が起きたか**: 結論。どの規則が働いた結果その答えになるのか
+2. **なぜそうなっているか**: 言語仕様がそう設計されている理由。
+   「そう決まっているから」で止めず、その規則が何を守るために存在するのかまで触れる
+   （例: フィールドが静的に解決されるのは、フィールドがポリモーフィズムの対象ではなく
+   「型に属する記憶領域」だから。メソッドと違い実行時の型で切り替わらない）
+3. **実務で何を意味するか**: その仕様を知らないとどんなバグを踏むか、どう書くのが安全か
+
+ただし冗長にしない。3〜5 文程度で、読んで「なるほど」と腑に落ちることを優先する。
+
 ### 選択肢の並び
 
 出題時に選択肢はシャッフルされ、正解のインデックスも追随する（`shuffleChoices`）。
@@ -92,4 +112,9 @@ npm run build         # tsc → verify:java → vite build
 
 - `className` は `code` 内の public クラス名と一致させる（検証時のファイル名になる）
 - 改行コードは既存ファイルに合わせる（`src/*.ts` は LF、`src/style.css` は CRLF）
-- 問題は [src/questions.ts](src/questions.ts)（id 1-11）と [src/moreQuestions.ts](src/moreQuestions.ts)（id 12 以降）に分かれている
+- Silver の問題ファイル（[src/silver/](src/silver/)）の構成:
+  - `core.ts`: 各分野の中核問題（id 1-11）
+  - `more.ts`: 分野を厚くする問題（id 12-37）
+  - `variants.ts` / `variants2.ts`: 既存論点の亜種（id 101-137）
+  - `extra1.ts`: 論点を増やすための追加問題（id 201-）
+  - `index.ts`: Silver 全問題の集約

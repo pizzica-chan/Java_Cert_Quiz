@@ -1,4 +1,4 @@
-import type { SilverQuestion } from "./quizTypes";
+import type { SilverQuestion } from "../quizTypes";
 
 /** 各分野を厚くするための追加問題（id 12 以降） */
 export const moreQuestions: SilverQuestion[] = [
@@ -6,6 +6,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 12,
     topic: "basics",
+    variantOf: "basics-declaration-order",
     question: "次のコードをコンパイルした場合の結果はどれか。1つ選びなさい。",
     className: "Order",
     code: [
@@ -32,6 +33,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 13,
     topic: "basics",
+    variantOf: "basics-args",
     question: "次のコードをコンパイルし、java Args とだけ入力して実行した場合の結果はどれか。1つ選びなさい。",
     className: "Args",
     code: [
@@ -58,6 +60,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 14,
     topic: "datatypes",
+    variantOf: "datatypes-string-identity",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Text",
     code: [
@@ -85,6 +88,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 15,
     topic: "datatypes",
+    variantOf: "datatypes-stringbuilder",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Builder",
     code: [
@@ -105,6 +109,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 16,
     topic: "datatypes",
+    variantOf: "datatypes-char-arithmetic",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Chars",
     code: [
@@ -126,6 +131,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 17,
     topic: "datatypes",
+    variantOf: "datatypes-var",
     question: "次のコードをコンパイルした場合の結果はどれか。1つ選びなさい。",
     className: "Inference",
     code: [
@@ -153,6 +159,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 18,
     topic: "operators",
+    variantOf: "operators-short-circuit",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Guard",
     code: [
@@ -180,6 +187,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 19,
     topic: "operators",
+    variantOf: "operators-string-concat",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Concat",
     code: [
@@ -200,6 +208,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 20,
     topic: "control",
+    variantOf: "control-labeled-break",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Search",
     code: [
@@ -228,6 +237,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 21,
     topic: "control",
+    variantOf: "control-enhanced-for",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Loop",
     code: [
@@ -250,6 +260,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 22,
     topic: "control",
+    variantOf: "control-do-while",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Retry",
     code: [
@@ -274,6 +285,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 23,
     topic: "arrays",
+    variantOf: "arrays-initializer",
     question: "次のコードをコンパイルした場合の結果はどれか。1つ選びなさい。",
     className: "Init",
     code: [
@@ -300,6 +312,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 24,
     topic: "arrays",
+    variantOf: "arrays-covariance",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Store",
     code: [
@@ -329,6 +342,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 25,
     topic: "methods",
+    variantOf: "methods-varargs",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Sum",
     code: [
@@ -355,6 +369,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 26,
     topic: "methods",
+    variantOf: "methods-static-context",
     question: "次のコードをコンパイルした場合の結果はどれか。1つ選びなさい。",
     className: "Account",
     code: [
@@ -384,6 +399,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 27,
     topic: "methods",
+    variantOf: "methods-constructor-chaining",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Box",
     code: [
@@ -417,6 +433,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 28,
     topic: "inheritance",
+    variantOf: "inheritance-abstract-anonymous",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Runner",
     code: [
@@ -454,6 +471,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 29,
     topic: "inheritance",
+    variantOf: "inheritance-class-wins",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Service",
     code: [
@@ -484,6 +502,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 30,
     topic: "inheritance",
+    variantOf: "inheritance-cast",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Zoo",
     code: [
@@ -520,6 +539,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 31,
     topic: "lambda",
+    variantOf: "lambda-effectively-final",
     question: "次のコードをコンパイルした場合の結果はどれか。1つ選びなさい。",
     className: "Capture",
     code: [
@@ -550,6 +570,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 32,
     topic: "lambda",
+    variantOf: "lambda-builtin-interfaces",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Picker",
     code: [
@@ -575,6 +596,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 33,
     topic: "api",
+    variantOf: "api-immutable-list",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Immutable",
     code: [
@@ -603,6 +625,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 34,
     topic: "api",
+    variantOf: "api-localdate-immutable",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Schedule",
     code: [
@@ -627,6 +650,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 35,
     topic: "exceptions",
+    variantOf: "exceptions-checked",
     question: "次のコードをコンパイルした場合の結果はどれか。1つ選びなさい。",
     className: "Loader",
     code: [
@@ -656,6 +680,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 36,
     topic: "exceptions",
+    variantOf: "exceptions-twr-order",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Closer",
     code: [
@@ -695,6 +720,7 @@ export const moreQuestions: SilverQuestion[] = [
   {
     id: 37,
     topic: "exceptions",
+    variantOf: "exceptions-multicatch",
     question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
     className: "Divider",
     code: [

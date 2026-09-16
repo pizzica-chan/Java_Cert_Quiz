@@ -98,8 +98,12 @@ async function compileAndRun(className: string, source: string): Promise<RunResu
   }
 
   // --- 実行
+  // package 宣言があると javac はパッケージ階層に出力するため、実行は完全修飾名で行う
+  const packageName = source.match(/^\s*package\s+([\w.]+)\s*;/m)?.[1];
+  const mainClass = packageName ? `${packageName}.${className}` : className;
+
   try {
-    const { stdout } = await execFileAsync(JAVA, ["-Dfile.encoding=UTF-8", "-cp", dir, className], {
+    const { stdout } = await execFileAsync(JAVA, ["-Dfile.encoding=UTF-8", "-cp", dir, mainClass], {
       timeout: 10_000,
     });
     return { kind: "output", stdout };
@@ -280,6 +284,36 @@ async function main(): Promise<void> {
   for (const issue of issues.sort((a, b) => a.questionId - b.questionId)) {
     console.log(`[ERROR] Q${issue.questionId} ${issue.rule}: ${issue.message}`);
   }
+
+  // 論点（variantOf）ごとの集計。出題される問題数＝論点数になる
+  const concepts = new Map<string, { topic: string; variants: number }>();
+  for (const q of questions) {
+    const key = q.variantOf ?? `__single_${q.id}`;
+    const entry = concepts.get(key) ?? { topic: q.topic, variants: 0 };
+    entry.variants += 1;
+    concepts.set(key, entry);
+  }
+
+  const byTopic = new Map<string, { concepts: number; questions: number }>();
+  for (const { topic } of concepts.values()) {
+    const e = byTopic.get(topic) ?? { concepts: 0, questions: 0 };
+    e.concepts += 1;
+    byTopic.set(topic, e);
+  }
+  for (const q of questions) {
+    const e = byTopic.get(q.topic);
+    if (e) e.questions += 1;
+  }
+
+  console.log("");
+  console.log("分野別の論点数（括弧内は亜種を含む問題数）:");
+  for (const [topic, e] of [...byTopic.entries()].sort((a, b) => b[1].concepts - a[1].concepts)) {
+    console.log(`  ${topic.padEnd(12)} ${String(e.concepts).padStart(3)} 論点 (${e.questions} 問)`);
+  }
+  const noVariant = [...concepts.values()].filter((c) => c.variants === 1).length;
+  console.log(
+    `合計: ${concepts.size} 論点 / ${questions.length} 問（亜種が無い論点: ${noVariant}）`,
+  );
 
   const unverifiable = questions.length - verifiable.length;
   console.log(
