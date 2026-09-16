@@ -607,10 +607,17 @@ export const variantQuestions8: SilverQuestion[] = [
       "2 つのパッケージは同じモジュール内からしか参照できない",
     ],
     correct: [0],
-    expected: {
-      kind: "not-verifiable",
-      reason:
-        "公開範囲の確認には参照側の別モジュールが必要で、単一ファイルの javac / java では検証できない。内容は目視レビューで担保する。",
+    expected: { kind: "output", stdout: "both" },
+    // exports を 2 つ書いた両方のパッケージが利用側から使えることを確認する
+    moduleSetup: {
+      main: "com.example.client/com.example.client.Main",
+      sources: [
+        { module: "com.example.lib", path: "module-info.java", content: ["module com.example.lib {", "    requires java.logging;", "    exports com.example.lib.api;", "    exports com.example.lib.spi;", "}"] },
+        { module: "com.example.lib", path: "com/example/lib/api/Api.java", content: ["package com.example.lib.api;", "", "public class Api {", "}"] },
+        { module: "com.example.lib", path: "com/example/lib/spi/Spi.java", content: ["package com.example.lib.spi;", "", "public class Spi {", "}"] },
+        { module: "com.example.client", path: "module-info.java", content: ["module com.example.client {", "    requires com.example.lib;", "}"] },
+        { module: "com.example.client", path: "com/example/client/Main.java", content: ["package com.example.client;", "", "import com.example.lib.api.Api;", "import com.example.lib.spi.Spi;", "", "public class Main {", "    public static void main(String[] args) {", "        new Api();", "        new Spi();", "        System.out.println(\"both\");", "    }", "}"] },
+      ],
     },
     explanation:
       "exports は必要な数だけ記述でき、指定した各パッケージの public 型が他モジュールへ公開されます。requires は自分が他を使うための宣言で、公開範囲とは無関係です。公開したいパッケージを 1 つずつ列挙させる方式なのは、「明示したものだけを見せる」という原則を徹底するためで、書き忘れたパッケージが意図せず公開されることはありません。特定のモジュールにだけ見せたい場合は exports ... to を使います。",
@@ -628,10 +635,18 @@ export const variantQuestions8: SilverQuestion[] = [
       "C は A の公開型を利用できない",
     ],
     correct: [0],
-    expected: {
-      kind: "not-verifiable",
-      reason:
-        "モジュール間の依存解決は複数モジュールを構成してコンパイルしないと確認できない。単一ファイルの javac / java では検証できないため、内容は目視レビューで担保する。",
+    expected: { kind: "output", stdout: "ok" },
+    // requires transitive により、C が mod.b を requires せずに b.api を使えることを確認する
+    moduleSetup: {
+      main: "mod.c/c.Main",
+      sources: [
+        { module: "mod.b", path: "module-info.java", content: ["module mod.b {", "    exports b.api;", "}"] },
+        { module: "mod.b", path: "b/api/Service.java", content: ["package b.api;", "", "public class Service {", "}"] },
+        { module: "mod.a", path: "module-info.java", content: ["module mod.a {", "    requires transitive mod.b;", "    exports a.api;", "}"] },
+        { module: "mod.a", path: "a/api/Facade.java", content: ["package a.api;", "", "public class Facade {", "}"] },
+        { module: "mod.c", path: "module-info.java", content: ["module mod.c {", "    requires mod.a;", "}"] },
+        { module: "mod.c", path: "c/Main.java", content: ["package c;", "", "import a.api.Facade;", "import b.api.Service;", "", "public class Main {", "    public static void main(String[] args) {", "        new Facade();", "        new Service();", "        System.out.println(\"ok\");", "    }", "}"] },
+      ],
     },
     explanation:
       "requires transitive は依存を利用側へ引き継ぐ宣言なので、C は B を明示的に requires しなくても使えます。これが必要になるのは、A の公開 API の戻り値や引数に B の型が現れる場合です。利用者がその型を受け取れなければコンパイルできないため、A 自身が「私を使うなら B も必要だ」と宣言する責任を負います。逆に内部実装でしか使わない依存を transitive にすると、不要な依存が利用側へ広がってしまいます。",
@@ -648,10 +663,14 @@ export const variantQuestions8: SilverQuestion[] = [
       "同じ名前空間のモジュールは互いを暗黙的に requires する",
     ],
     correct: [0],
-    expected: {
-      kind: "not-verifiable",
-      reason:
-        "暗黙依存の解決結果はモジュールパスを構成したコンパイルでしか確認できない。単一ファイルの javac / java では検証できないため、内容は目視レビューで担保する。",
+    expected: { kind: "output", stdout: "implicit" },
+    // java.base を書かなくても List や String が使えることを確認する
+    moduleSetup: {
+      main: "com.example.implicit/com.example.implicit.Main",
+      sources: [
+        { module: "com.example.implicit", path: "module-info.java", content: ["module com.example.implicit {", "}"] },
+        { module: "com.example.implicit", path: "com/example/implicit/Main.java", content: ["package com.example.implicit;", "", "import java.util.List;", "", "public class Main {", "    public static void main(String[] args) {", "        List<String> list = List.of(\"implicit\");", "        System.out.println(list.get(0));", "    }", "}"] },
+      ],
     },
     explanation:
       "java.base には Object や String、コレクションなど言語の土台となる型が含まれ、すべてのモジュールが暗黙的に依存します。java.se は Java SE 全体を束ねる集約モジュールで、暗黙にはなりません。例外なく全員が必要とするものだけを暗黙にする、という判断は、java.lang が import なしで使えるのと同じ考え方です。裏を返せば、java.sql や java.logging のようにすべてのアプリが使うとは限らないモジュールは、必ず明示する必要があります。",
@@ -668,10 +687,14 @@ export const variantQuestions8: SilverQuestion[] = [
       "java -m mods com.example.app.Main",
     ],
     correct: [0],
-    expected: {
-      kind: "not-verifiable",
-      reason:
-        "コマンドラインの形式そのものを問う問題で、検証スクリプトの javac / java 呼び出しでは確認できない。内容は目視レビューで担保する。",
+    expected: { kind: "output", stdout: "launched" },
+    // --module-path と -m モジュール名/クラス名 の形式で実際に起動できることを確認する（他の選択肢の誤りまでは機械検証できない）
+    moduleSetup: {
+      main: "com.example.app/com.example.app.Main",
+      sources: [
+        { module: "com.example.app", path: "module-info.java", content: ["module com.example.app {", "}"] },
+        { module: "com.example.app", path: "com/example/app/Main.java", content: ["package com.example.app;", "", "public class Main {", "    public static void main(String[] args) {", "        System.out.println(\"launched\");", "    }", "}"] },
+      ],
     },
     explanation:
       "モジュールを実行するには、--module-path でモジュールの置き場所を指定し、-m（--module）で「モジュール名/メインクラスの完全修飾名」を渡します。従来のクラスパス（-cp）はモジュールを解決しないため、モジュールとして動かす場合は使いません。モジュール名とクラス名をスラッシュで区切るのは、どのモジュールに属するクラスかを一意に示すためで、同名のクラスが別モジュールに存在しても区別できます。",
@@ -689,10 +712,16 @@ export const variantQuestions8: SilverQuestion[] = [
       "モジュール化すると public は使えなくなり、代わりに exports を型ごとに書く",
     ],
     correct: [0],
-    expected: {
-      kind: "not-verifiable",
-      reason:
-        "モジュール境界をまたぐアクセス制御は参照側の別モジュールを用意しないと確認できない。単一ファイルの javac / java では検証できないため、内容は目視レビューで担保する。",
+    expected: { kind: "compile-error" },
+    // public でも exports されていなければ他モジュールから参照できないことを確認する
+    moduleSetup: {
+      sources: [
+        { module: "com.example.lib", path: "module-info.java", content: ["module com.example.lib {", "    exports com.example.lib.api;", "}"] },
+        { module: "com.example.lib", path: "com/example/lib/api/Api.java", content: ["package com.example.lib.api;", "", "public class Api {", "}"] },
+        { module: "com.example.lib", path: "com/example/lib/hidden/Secret.java", content: ["package com.example.lib.hidden;", "", "public class Secret {", "}"] },
+        { module: "com.example.client", path: "module-info.java", content: ["module com.example.client {", "    requires com.example.lib;", "}"] },
+        { module: "com.example.client", path: "com/example/client/Main.java", content: ["package com.example.client;", "", "import com.example.lib.hidden.Secret;", "", "public class Main {", "    public static void main(String[] args) {", "        System.out.println(new Secret());", "    }", "}"] },
+      ],
     },
     explanation:
       "モジュールシステムの導入により、public の意味が「どこからでも見える」から「exports されたパッケージにあれば見える」へと実質的に変わりました。exports が公開するのはパッケージ単位で、しかも公開されるのはその中の public 型だけです。private や package-private のメンバーが見えるようになるわけではなく、従来のアクセス修飾子による制御はそのまま働きます。つまりモジュールは既存の仕組みを置き換えるのではなく、その外側にもう一段の境界を足したものだと理解すると整理できます。",

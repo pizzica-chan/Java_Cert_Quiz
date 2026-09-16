@@ -318,10 +318,16 @@ export const coreQuestions: SilverQuestion[] = [
       "java.base を requires していないため、このモジュールはコンパイルできない",
     ],
     correct: [0],
-    expected: {
-      kind: "not-verifiable",
-      reason:
-        "モジュールの公開範囲は、参照する側の別モジュールを用意して初めて検証できる。単一ファイルの javac / java では確認できないため、内容は目視レビューで担保する。",
+    expected: { kind: "output", stdout: "used" },
+    // exports した api パッケージが利用側から使えることを実機で確認する
+    moduleSetup: {
+      main: "com.example.client/com.example.client.Main",
+      sources: [
+        { module: "com.example.lib", path: "module-info.java", content: ["module com.example.lib {", "    requires java.sql;", "    exports com.example.lib.api;", "}"] },
+        { module: "com.example.lib", path: "com/example/lib/api/Published.java", content: ["package com.example.lib.api;", "", "public class Published {", "}"] },
+        { module: "com.example.client", path: "module-info.java", content: ["module com.example.client {", "    requires com.example.lib;", "}"] },
+        { module: "com.example.client", path: "com/example/client/Main.java", content: ["package com.example.client;", "", "import com.example.lib.api.Published;", "", "public class Main {", "    public static void main(String[] args) {", "        new Published();", "        System.out.println(\"used\");", "    }", "}"] },
+      ],
     },
     explanation:
       "exports は指定したパッケージの public 型だけを他モジュールに公開します。exports されていないパッケージは同じモジュール内からしか参照できません。requires は「このモジュールが他を使う」宣言であり、推移的に公開するには requires transitive が必要です。また java.base はすべてのモジュールが暗黙的に requires するため、明示的な記述は不要です。",

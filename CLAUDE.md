@@ -38,12 +38,37 @@ expected: { kind: "exception", type: "ClassCastException" } // 実行時にこ�
 **`expected` を自分の記憶から書いて、検証を通さずに完了としないこと。**
 書いた期待値が実機と違えばビルドが落ちる。落ちたら、まず自分の理解が誤っていたことを疑う。
 
-### 3. `not-verifiable` は安易に使わない
+### 3. `not-verifiable` は原則として使わない
 
-単一ファイルの `javac` / `java` では検証できないもの（モジュール構成など）に限って使い、
-`reason` に「なぜ検証できないか」を必ず書く。
+**現在 `not-verifiable` の問題は 0 件で、全問が実機検証されている。この状態を維持すること。**
+
+単一ファイルで検証できない場合も、次の手段で実機検証できることが多い。
+
+- **`moduleSetup`**: 複数モジュールを構成して `--module-source-path` でコンパイル・実行する。
+  「exports していないパッケージは他モジュールから見えない」のように、
+  モジュールをまたいで初めて確認できる挙動はこれで検証する
+- **`runAsSourceFile`**: `javac` を介さず `java Foo.java` で実行する（SE 11 のソースファイルモード）
+
+どうしても検証できない場合に限り `not-verifiable` を使い、`reason` に理由を必ず書く。
 「期待値を書くのが面倒」「検証が通らない」という理由で使ってはいけない。
-`not-verifiable` の問題は正しさが人間のレビュー頼りになるため、増やすほどアプリの信頼性が下がる。
+
+### モジュール構成での検証（`moduleSetup`）
+
+```ts
+expected: { kind: "compile-error" },
+moduleSetup: {
+  main: "com.example.client/com.example.client.Main", // 省略するとコンパイルのみ
+  sources: [
+    { module: "com.example.lib", path: "module-info.java", content: ["module com.example.lib {", "}"] },
+    { module: "com.example.lib", path: "com/example/lib/api/Api.java", content: [...] },
+  ],
+},
+```
+
+**注意**: `moduleSetup` と `runAsSourceFile` による検証は「解説で主張している挙動が
+処理系と一致するか」の裏取りであり、**正解の選択肢と実行結果の一致は検証されない**
+（選択肢が文章による説明であり、実行結果と文字列比較できないため）。
+そのため、これらの問題では選択肢と解説の対応を人間が確認する必要がある。
 
 ## 出題範囲
 
@@ -107,6 +132,9 @@ npm run build         # tsc → verify:java → vite build
 - `expected-mismatch`: 期待した結果と実機の結果が違う（出力・コンパイルエラーの行・例外の型）
 - `choice-mismatch`: 正解として指定した選択肢が期待結果と噛み合っていない
 - `unique-id` / `correct` / `choices` / `class-name`: 問題データの構造的な誤り
+
+`choice-mismatch` は実行結果を問う問題にだけ適用される。
+`moduleSetup` / `runAsSourceFile` の問題は対象外（上記の注意を参照）。
 
 ## その他
 

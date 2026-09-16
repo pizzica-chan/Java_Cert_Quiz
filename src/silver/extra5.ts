@@ -128,10 +128,15 @@ export const extraQuestions5: SilverQuestion[] = [
       "java.sql は自動的に使えるが、java.logging は別途 requires が必要になる",
     ],
     correct: [0],
-    expected: {
-      kind: "not-verifiable",
-      reason:
-        "推移的な依存の有無は、依存する側の別モジュールを用意してコンパイルしないと確認できない。単一ファイルの javac / java では検証できないため、内容は目視レビューで担保する。",
+    expected: { kind: "compile-error" },
+    // transitive でない java.sql は利用側へ引き継がれず、参照するとコンパイルできないことを確認する
+    moduleSetup: {
+      sources: [
+        { module: "com.example.core", path: "module-info.java", content: ["module com.example.core {", "    requires transitive java.logging;", "    requires java.sql;", "    exports com.example.core.api;", "}"] },
+        { module: "com.example.core", path: "com/example/core/api/Api.java", content: ["package com.example.core.api;", "", "public class Api {", "}"] },
+        { module: "com.example.user", path: "module-info.java", content: ["module com.example.user {", "    requires com.example.core;", "}"] },
+        { module: "com.example.user", path: "com/example/user/Main.java", content: ["package com.example.user;", "", "import java.util.logging.Logger;", "import java.sql.Driver;", "", "public class Main {", "    public static void main(String[] args) {", "        Logger.getLogger(\"x\");", "        Driver d = null;", "        System.out.println(d);", "    }", "}"] },
+      ],
     },
     explanation:
       "requires transitive は「このモジュールを使う側にも、その依存を一緒に見せる」という宣言です。通常の requires は自分が使うためだけの依存なので、利用側には伝わりません。transitive が必要になるのは、公開 API の戻り値や引数に他モジュールの型が現れる場合で、それが無いと利用側は受け取った値の型を解決できずコンパイルできません。逆に内部実装でしか使わない依存は通常の requires に留めることで、利用側に不要な依存を広げずに済みます。",
@@ -153,10 +158,14 @@ export const extraQuestions5: SilverQuestion[] = [
       "java.base を使うには requires transitive java.base と書く必要がある",
     ],
     correct: [0],
-    expected: {
-      kind: "not-verifiable",
-      reason:
-        "モジュール宣言の解決結果はモジュールパスを構成してコンパイルしないと確認できない。単一ファイルの javac / java では検証できないため、内容は目視レビューで担保する。",
+    expected: { kind: "output", stdout: "ok" },
+    // java.base を requires せずに String などが使えることを実機で確認する
+    moduleSetup: {
+      main: "com.example.app/com.example.app.api.Main",
+      sources: [
+        { module: "com.example.app", path: "module-info.java", content: ["module com.example.app {", "    exports com.example.app.api;", "}"] },
+        { module: "com.example.app", path: "com/example/app/api/Main.java", content: ["package com.example.app.api;", "", "public class Main {", "    public static void main(String[] args) {", "        String text = \"ok\";", "        System.out.println(text);", "    }", "}"] },
+      ],
     },
     explanation:
       "java.base には Object や String、コレクションなど言語の土台となる型が含まれており、すべてのモジュールが暗黙的に依存します。明示的に requires java.base と書くこともできますが、書かなくても同じです。あらゆるコードが必ず使う依存を毎回書かせるのは無意味なので、言語仕様として省略できるようになっています。java.lang パッケージが import なしで使えるのと同じ発想で、「例外なく全員が必要とするものは暗黙にする」という一貫した方針です。",
@@ -179,10 +188,47 @@ export const extraQuestions5: SilverQuestion[] = [
       "リフレクションを使わない限り、同じパッケージ内からも参照できない",
     ],
     correct: [0],
-    expected: {
-      kind: "not-verifiable",
-      reason:
-        "モジュール境界でのアクセス制御は、参照側の別モジュールを用意しないと確認できない。単一ファイルの javac / java では検証できないため、内容は目視レビューで担保する。",
+    expected: { kind: "compile-error" },
+    // 提供側と利用側の 2 モジュールを構成し、exports していないパッケージを
+    // 参照するとコンパイルが通らないことを実機で確かめる
+    moduleSetup: {
+      sources: [
+        {
+          module: "com.example.lib",
+          path: "module-info.java",
+          content: ["module com.example.lib {", "    exports com.example.lib.api;", "}"],
+        },
+        {
+          module: "com.example.lib",
+          path: "com/example/lib/api/Published.java",
+          content: ["package com.example.lib.api;", "", "public class Published {", "}"],
+        },
+        {
+          module: "com.example.lib",
+          path: "com/example/lib/internal/Hidden.java",
+          content: ["package com.example.lib.internal;", "", "public class Hidden {", "}"],
+        },
+        {
+          module: "com.example.client",
+          path: "module-info.java",
+          content: ["module com.example.client {", "    requires com.example.lib;", "}"],
+        },
+        {
+          module: "com.example.client",
+          path: "com/example/client/Main.java",
+          content: [
+            "package com.example.client;",
+            "",
+            "import com.example.lib.internal.Hidden;",
+            "",
+            "public class Main {",
+            "    public static void main(String[] args) {",
+            "        System.out.println(new Hidden());",
+            "    }",
+            "}",
+          ],
+        },
+      ],
     },
     explanation:
       "モジュールシステムでは、exports で公開したパッケージの public 型だけが他モジュールから見えます。exports されていないパッケージは、public であってもモジュールの外からは参照できません。これは「public はどこからでも使える」という従来の前提を変える大きな変更で、内部実装用のクラスを public にせざるを得なかった問題（パッケージをまたいで使うため）を解決します。アクセス制御の軸に「どのモジュールから見えるか」が加わったことで、ライブラリは公開 API と内部実装を明確に分離できるようになりました。",
@@ -199,10 +245,27 @@ export const extraQuestions5: SilverQuestion[] = [
       "1 つのモジュールに複数の module-info.java を置くことができる",
     ],
     correct: [0],
-    expected: {
-      kind: "not-verifiable",
-      reason:
-        "ファイル配置の規約はディレクトリ構成を伴うコンパイルでしか確認できない。単一ファイルの javac / java では検証できないため、内容は目視レビューで担保する。",
+    expected: { kind: "output", stdout: "placed" },
+    // 規約どおりの配置（モジュールのルート直下に module-info.java）で
+    // 実際にコンパイル・実行できることを確認する
+    moduleSetup: {
+      main: "com.example.placed/com.example.placed.Main",
+      sources: [
+        { module: "com.example.placed", path: "module-info.java", content: ["module com.example.placed {", "}"] },
+        {
+          module: "com.example.placed",
+          path: "com/example/placed/Main.java",
+          content: [
+            "package com.example.placed;",
+            "",
+            "public class Main {",
+            "    public static void main(String[] args) {",
+            "        System.out.println(\"placed\");",
+            "    }",
+            "}",
+          ],
+        },
+      ],
     },
     explanation:
       "module-info.java はモジュールのルート（パッケージ階層の最上位）に 1 つだけ置き、名前も固定です。位置と名前を固定するのは、コンパイラやビルドツールがモジュール宣言を探す場所を一意に決められるようにするためで、パッケージのディレクトリ構成がクラス名から決まるのと同じ発想です。モジュール名はパッケージ名と一致させる必要はありませんが、衝突を避けるため慣習的に逆ドメイン名（公開 API のパッケージ名と同じ）を使います。",

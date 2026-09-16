@@ -7,10 +7,10 @@
  */
 import { execFile } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { promisify } from "node:util";
 import { questions } from "../src/questions.ts";
-import type { ExpectedResult, SilverQuestion } from "../src/quizTypes.ts";
+import type { ExpectedResult, ModuleSetup, SilverQuestion } from "../src/quizTypes.ts";
 
 const execFileAsync = promisify(execFile);
 
@@ -126,6 +126,101 @@ async function compileAndRun(
   }
 }
 
+/**
+ * モジュール構成をそのままコンパイル・実行する。
+ * 「exports していないパッケージは他モジュールから見えない」といった、
+ * モジュールをまたいで初めて確かめられる挙動を実機で検証するために使う。
+ */
+async function compileAndRunModules(
+  questionId: number,
+  setup: ModuleSetup,
+): Promise<RunResult> {
+  const base = join(WORK_DIR, `q${questionId}_modules`);
+  const srcRoot = join(base, "src");
+  const outRoot = join(base, "out");
+
+  const moduleNames = new Set<string>();
+  for (const file of setup.sources) {
+    moduleNames.add(file.module);
+    const full = join(srcRoot, file.module, file.path);
+    mkdirSync(dirname(full), { recursive: true });
+    writeFileSync(full, file.content.join("\n"), "utf8");
+  }
+  mkdirSync(outRoot, { recursive: true });
+
+  // --- コンパイル（--module-source-path で複数モジュールをまとめて解決させる）
+  try {
+    await execFileAsync(JAVAC, [
+      ...LOCALE_FLAGS,
+      "-encoding",
+      "UTF-8",
+      "--module-source-path",
+      srcRoot,
+      "-d",
+      outRoot,
+      "-m",
+      [...moduleNames].join(","),
+    ]);
+  } catch (e) {
+    const err = e as { stderr?: string; stdout?: string };
+    const output = `${err.stderr ?? ""}${err.stdout ?? ""}`;
+    const lines = [...output.matchAll(/\.java:(\d+):\s*error/g)].map((m) => Number(m[1]));
+    return { kind: "compile-error", output, lines };
+  }
+
+  if (!setup.main) {
+    // 実行指定が無い場合はコンパイルが通ったことをもって成功とする
+    return { kind: "output", stdout: "" };
+  }
+
+  // --- 実行
+  try {
+    const { stdout } = await execFileAsync(
+      JAVA,
+      ["-Dfile.encoding=UTF-8", "--module-path", outRoot, "-m", setup.main],
+      { timeout: 10_000 },
+    );
+    return { kind: "output", stdout };
+  } catch (e) {
+    const err = e as { stderr?: string; killed?: boolean };
+    const stderr = err.stderr ?? "";
+    const m = stderr.match(/Exception in thread "[^"]*"\s+([\w.$]+)/);
+    if (m) return { kind: "exception", type: m[1]!, stderr };
+    if (err.killed) return { kind: "exception", type: "TIMEOUT", stderr: "10 秒以内に終了しませんでした" };
+    return { kind: "exception", type: "UNKNOWN", stderr };
+  }
+}
+
+/** Java SE 11 のソースファイルモード（javac を介さず java Foo.java で実行）で確かめる */
+async function runAsSourceFile(
+  questionId: number,
+  className: string,
+  source: string,
+): Promise<RunResult> {
+  const dir = join(WORK_DIR, `q${questionId}_srcmode`);
+  mkdirSync(dir, { recursive: true });
+  const file = join(dir, `${className}.java`);
+  writeFileSync(file, source, "utf8");
+
+  try {
+    const { stdout } = await execFileAsync(JAVA, ["-Dfile.encoding=UTF-8", file], {
+      timeout: 10_000,
+    });
+    return { kind: "output", stdout };
+  } catch (e) {
+    const err = e as { stderr?: string; stdout?: string };
+    const stderr = err.stderr ?? "";
+    // ソースファイルモードではコンパイルエラーも java コマンドが報告する
+    if (/error:/.test(stderr)) {
+      const lines = [...stderr.matchAll(/\.java:(\d+):\s*error/g)].map((m) => Number(m[1]));
+      return { kind: "compile-error", output: stderr, lines };
+    }
+    const m = stderr.match(/Exception in thread "[^"]*"\s+([\w.$]+)/);
+    if (m) return { kind: "exception", type: m[1]!, stderr };
+    return { kind: "exception", type: "UNKNOWN", stderr };
+  }
+}
+
 // ---------------------------------------------------------------- 照合ロジック
 
 /** 改行コードと末尾の空白を吸収して比較する */
@@ -228,7 +323,7 @@ function staticChecks(q: SilverQuestion, seenIds: Set<number>): Issue[] {
   if (dup.length > 0) add("choices", `選択肢が重複しています: ${[...new Set(dup)].join(" / ")}`);
 
   // not-verifiable な問題（module-info など）は実機で動かさないので className は不要
-  const runsOnJdk = q.code && q.expected?.kind !== "not-verifiable";
+  const runsOnJdk = q.code && !q.moduleSetup && q.expected?.kind !== "not-verifiable";
   if (runsOnJdk && !q.className) add("class-name", "code がありますが className が未指定です");
   if (runsOnJdk && q.className) {
     const declared = q.code.join("\n").match(/public\s+(?:final\s+|abstract\s+)?class\s+(\w+)/);
@@ -257,9 +352,11 @@ async function main(): Promise<void> {
   const seenIds = new Set<number>();
   for (const q of questions) issues.push(...staticChecks(q, seenIds));
 
-  const verifiable = questions.filter(
-    (q) => q.code && q.className && q.expected && q.expected.kind !== "not-verifiable",
-  );
+  const verifiable = questions.filter((q) => {
+    if (!q.expected || q.expected.kind === "not-verifiable") return false;
+    if (q.moduleSetup) return true; // モジュール構成で検証する
+    return Boolean(q.code && q.className);
+  });
   let verified = 0;
 
   // 並列で走らせる（javac / java は起動が重いため）
@@ -269,7 +366,11 @@ async function main(): Promise<void> {
       const q = queue.shift();
       if (!q) return;
 
-      const actual = await compileAndRun(q.id, q.className!, q.code!.join("\n"));
+      const actual = q.moduleSetup
+        ? await compileAndRunModules(q.id, q.moduleSetup)
+        : q.runAsSourceFile
+          ? await runAsSourceFile(q.id, q.className!, q.code!.join("\n"))
+          : await compileAndRun(q.id, q.className!, q.code!.join("\n"));
       const mismatch = compareResult(q.expected!, actual);
       if (mismatch) {
         issues.push({ questionId: q.id, rule: "expected-mismatch", message: mismatch });
@@ -277,9 +378,13 @@ async function main(): Promise<void> {
         verified += 1;
       }
 
-      const inconsistent = checkChoiceConsistency(q, q.expected!);
-      if (inconsistent) {
-        issues.push({ questionId: q.id, rule: "choice-mismatch", message: inconsistent });
+      // モジュール構成の検証は「解説の主張どおりに処理系が振る舞うか」を確かめるもので、
+      // 選択肢そのものが実行結果を表しているわけではないため、突き合わせの対象外とする
+      if (!q.moduleSetup && !q.runAsSourceFile) {
+        const inconsistent = checkChoiceConsistency(q, q.expected!);
+        if (inconsistent) {
+          issues.push({ questionId: q.id, rule: "choice-mismatch", message: inconsistent });
+        }
       }
     }
   });
@@ -322,9 +427,10 @@ async function main(): Promise<void> {
   );
 
   const unverifiable = questions.length - verifiable.length;
+  const setupVerified = verifiable.filter((q) => q.moduleSetup || q.runAsSourceFile).length;
   console.log(
     `\n検証完了: 全 ${questions.length} 問中 ${verified} 問を JDK 11 で実機検証、` +
-      `${unverifiable} 問は実機検証の対象外（目視レビュー対象）、error=${issues.length}`,
+      `（うち ${setupVerified} 問はモジュール構成・実行方法の裏取り）、${unverifiable} 問は実機検証の対象外（目視レビュー対象）、error=${issues.length}`,
   );
 
   if (issues.length > 0) process.exit(1);

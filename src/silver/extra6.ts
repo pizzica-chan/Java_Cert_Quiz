@@ -82,11 +82,10 @@ export const extraQuestions6: SilverQuestion[] = [
       "java Hello.java は Java SE 11 では使用できない",
     ],
     correct: [0],
-    expected: {
-      kind: "not-verifiable",
-      reason:
-        "java コマンドの起動方法そのものを問う問題で、検証スクリプトの javac → java という固定手順では確認できない。内容は目視レビューで担保する。",
-    },
+    className: "Hello",
+    expected: { kind: "output", stdout: "hello" },
+    // javac を介さず java Hello.java として実行し、実際に動くことを確認する
+    runAsSourceFile: true,
     explanation:
       "Java SE 11 で追加されたソースファイルモードにより、単一ファイルのプログラムは javac を挟まず java Hello.java で直接実行できます。内部ではメモリ上でコンパイルされ、class ファイルは生成されません。これは学習用の小さなプログラムや使い捨てのスクリプトのために用意された機能で、Java を試す際の敷居を下げる狙いがあります。複数ファイルに分かれたプログラムや外部ライブラリを使う場合は従来どおり javac が必要です。なお実行時に指定するのはソースファイル名（拡張子付き）である点に注意してください。",
   },

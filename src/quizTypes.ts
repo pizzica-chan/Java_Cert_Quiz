@@ -49,6 +49,27 @@ export type ExpectedResult =
    */
   | { kind: "not-verifiable"; reason: string };
 
+/**
+ * 複数ファイル（モジュール構成）を伴う検証のためのソース一式。
+ * 単一ファイルの `code` では表現できない「モジュールをまたぐ公開範囲」などを
+ * 実際に javac / java へかけて確かめるために使う。
+ */
+export interface ModuleSetup {
+  /**
+   * 実行するエントリーポイント。"モジュール名/メインクラスの完全修飾名" の形式。
+   * 省略するとコンパイルのみ行う（コンパイルエラーの検証で使う）。
+   */
+  main?: string;
+  /** モジュールごとのソースファイル */
+  sources: Array<{
+    /** モジュール名。そのままソースディレクトリ名になる */
+    module: string;
+    /** モジュール内の相対パス（例: "module-info.java" や "com/example/api/Service.java"） */
+    path: string;
+    content: string[];
+  }>;
+}
+
 export interface SilverQuestion {
   id: number;
   topic: ExamTopic;
@@ -79,4 +100,14 @@ export interface SilverQuestion {
    * 指定がない問題は機械検証できないため、内容の正しさは人間のレビューに依存する。
    */
   expected?: ExpectedResult;
+  /**
+   * モジュール構成での検証。指定すると `code` ではなくこちらを
+   * --module-source-path でコンパイル・実行して expected と突き合わせる。
+   */
+  moduleSetup?: ModuleSetup;
+  /**
+   * Java SE 11 のソースファイルモード（javac を介さず `java Foo.java` で実行）で
+   * 検証する場合に true。`code` をそのまま java コマンドへ渡す。
+   */
+  runAsSourceFile?: boolean;
 }

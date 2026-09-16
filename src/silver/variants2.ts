@@ -559,10 +559,16 @@ export const variantQuestions2: SilverQuestion[] = [
       "com.example.service.api は同一モジュール内からしか参照できない",
     ],
     correct: [0],
-    expected: {
-      kind: "not-verifiable",
-      reason:
-        "公開範囲の検証には参照側の別モジュールを用意する必要があり、単一ファイルの javac / java では確認できない。内容は目視レビューで担保する。",
+    expected: { kind: "compile-error" },
+    // 限定公開したパッケージを対象外のモジュールから参照するとコンパイルできないことを確認する
+    moduleSetup: {
+      sources: [
+        { module: "com.example.service", path: "module-info.java", content: ["module com.example.service {", "    exports com.example.service.api;", "    exports com.example.service.internal to com.example.admin;", "}"] },
+        { module: "com.example.service", path: "com/example/service/api/Api.java", content: ["package com.example.service.api;", "", "public class Api {", "}"] },
+        { module: "com.example.service", path: "com/example/service/internal/Internal.java", content: ["package com.example.service.internal;", "", "public class Internal {", "}"] },
+        { module: "com.example.other", path: "module-info.java", content: ["module com.example.other {", "    requires com.example.service;", "}"] },
+        { module: "com.example.other", path: "com/example/other/Main.java", content: ["package com.example.other;", "", "import com.example.service.internal.Internal;", "", "public class Main {", "    public static void main(String[] args) {", "        System.out.println(new Internal());", "    }", "}"] },
+      ],
     },
     explanation:
       "exports ... to は「限定的公開」で、指定したモジュールにだけパッケージを見せます。実装の詳細を特定の相手（管理ツールなど）にだけ渡したいときに使います。requires transitive は依存を推移的に再公開する宣言で、このモジュールを requires した側は java.sql も自動的に使えます。自分の API の戻り値や引数に他モジュールの型が現れる場合、これが無いと利用側がコンパイルできません。モジュールシステムの狙いは、これまで public しか無く事実上すべて公開されていた境界に、「誰に見せるか」という軸を持ち込むことにあります。",
