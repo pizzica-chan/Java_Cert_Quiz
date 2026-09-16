@@ -2,6 +2,12 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "java-cert-quiz",
   "compatibility_date": "2026-09-17",
+  "build": {
+    // Cloudflare Workers Builds (Git連携の自動デプロイ) が deploy 前に
+    // このコマンドを実行してくれる。これが無いと dist が無いまま
+    // wrangler deploy が走ってエラーになる。
+    "command": "npm run build"
+  },
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application"
