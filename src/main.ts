@@ -295,6 +295,17 @@ function formatTime(sec: number): string {
   return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+/**
+ * 新しい画面・新しい問題を表示する直前に呼ぶ。
+ * innerHTML の書き換えではスクロール位置が保たれてしまうため、
+ * 「前の問題を読み終えた位置のまま次の問題が表示される」という不便を防ぐ。
+ * 選択肢クリックや解答表示など、同じ問題内での再描画では呼ばない
+ * （呼ぶと選択のたびに画面が先頭に飛んで、逆に使いにくくなる）。
+ */
+function scrollToTop(): void {
+  window.scrollTo(0, 0);
+}
+
 // ------------------------------------------------------------------ トップ画面
 
 function renderStart(): void {
@@ -426,6 +437,7 @@ function openList(results: SilverQuestion[], mode: ListMode): void {
   state.listQuestions = results;
   state.listMode = mode;
   state.screen = "list";
+  scrollToTop();
   render();
 }
 
@@ -480,6 +492,7 @@ function renderList(): void {
 
   document.getElementById("list-back-btn")!.addEventListener("click", () => {
     state.screen = "start";
+    scrollToTop();
     render();
   });
 
@@ -516,6 +529,7 @@ function openQuestionFromList(index: number): void {
   state.remainingSec = 0;
   stopTimer();
   state.screen = "quiz";
+  scrollToTop();
   render();
 }
 
@@ -669,6 +683,7 @@ function renderQuiz(): void {
   document.getElementById("quit-btn")!.addEventListener("click", () => {
     stopTimer();
     state.screen = state.quizReturnScreen;
+    scrollToTop();
     render();
   });
   document.getElementById("bookmark-btn")?.addEventListener("click", () => {
@@ -677,6 +692,7 @@ function renderQuiz(): void {
   });
   document.getElementById("prev-btn")?.addEventListener("click", () => {
     state.currentIndex -= 1;
+    scrollToTop();
     render();
   });
   document.getElementById("check-btn")?.addEventListener("click", () => {
@@ -685,12 +701,14 @@ function renderQuiz(): void {
   });
   document.getElementById("next-btn")?.addEventListener("click", () => {
     state.currentIndex += 1;
+    scrollToTop();
     render();
   });
   document.getElementById("finish-btn")?.addEventListener("click", () => {
     if (isListSession) {
       stopTimer();
       state.screen = "list";
+      scrollToTop();
       render();
     } else {
       finishExam();
@@ -717,6 +735,7 @@ function toggleChoice(index: number, multiple: boolean): void {
 function finishExam(): void {
   stopTimer();
   state.screen = "result";
+  scrollToTop();
   render();
 }
 
@@ -799,6 +818,7 @@ function renderResult(): void {
   document.getElementById("retry-btn")!.addEventListener("click", () => startQuiz(state.mode));
   document.getElementById("home-btn")!.addEventListener("click", () => {
     state.screen = "start";
+    scrollToTop();
     render();
   });
   document.querySelectorAll("[data-review]").forEach((el) => {
@@ -806,6 +826,7 @@ function renderResult(): void {
       state.currentIndex = Number(el.getAttribute("data-review"));
       state.checked[state.currentIndex] = true;
       state.screen = "quiz";
+      scrollToTop();
       render();
     });
   });
@@ -841,6 +862,7 @@ function startQuiz(mode: Mode): void {
     stopTimer();
   }
 
+  scrollToTop();
   render();
 }
 
