@@ -8,11 +8,13 @@
     "build": "tsc && npm run verify:java && vite build",
     "verify:java": "tsx scripts/verify-java.mts",
     "verify:questions": "tsx scripts/validate-questions.mts",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && wrangler deploy"
   },
   "devDependencies": {
     "tsx": "^4.19.4",
     "typescript": "^5.7.3",
-    "vite": "^6.0.7"
+    "vite": "^6.0.7",
+    "wrangler": "^4.118.0"
   }
 }
