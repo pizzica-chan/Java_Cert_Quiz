@@ -12,8 +12,10 @@ const EXAM = {
   passingRate: 0.63,
 };
 
-type Screen = "start" | "quiz" | "result";
+type Screen = "start" | "quiz" | "result" | "list";
 type Mode = "practice" | "exam";
+/** 問題一覧画面（"list"）を何のために開いたか。空一覧時のメッセージや、一覧内での挙動を左右する */
+type ListMode = "search" | "bookmarks";
 
 interface AppState {
   screen: Screen;
@@ -29,6 +31,18 @@ interface AppState {
   /** 模擬試験の残り秒数 */
   remainingSec: number;
   timerId: number | null;
+  /** ブックマークした問題の id */
+  bookmarks: Set<number>;
+  /** 検索欄に残す直前の入力（トップに戻ったときに保持する） */
+  searchQuery: string;
+  /** 問題一覧画面に表示している問題（検索結果 or ブックマーク） */
+  listQuestions: SilverQuestion[];
+  listMode: ListMode;
+  /**
+   * quiz 画面の「中断」で戻る先。検索結果やブックマークから開いた問題は
+   * 一覧へ戻し、通常の練習/模擬試験はトップへ戻す。
+   */
+  quizReturnScreen: "start" | "list";
 }
 
 const state: AppState = {
@@ -41,6 +55,11 @@ const state: AppState = {
   checked: [],
   remainingSec: 0,
   timerId: null,
+  bookmarks: loadBookmarks(),
+  searchQuery: "",
+  listQuestions: [],
+  listMode: "search",
+  quizReturnScreen: "start",
 };
 
 const app = document.getElementById("app")!;
@@ -62,6 +81,58 @@ function shuffle<T>(array: T[]): T[] {
     [copy[i], copy[j]] = [copy[j]!, copy[i]!];
   }
   return copy;
+}
+
+/** ブックマークした問題 id を保存するキー */
+const BOOKMARK_KEY = "java-cert-quiz-bookmarks";
+
+function loadBookmarks(): Set<number> {
+  try {
+    const raw = localStorage.getItem(BOOKMARK_KEY);
+    const parsed = raw ? (JSON.parse(raw) as unknown) : null;
+    return Array.isArray(parsed) ? new Set(parsed.filter((v): v is number => typeof v === "number")) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveBookmarks(bookmarks: Set<number>): void {
+  try {
+    localStorage.setItem(BOOKMARK_KEY, JSON.stringify([...bookmarks]));
+  } catch {
+    // プライベートモードや容量超過は無視する（ブックマーク自体は続けられる）
+  }
+}
+
+function toggleBookmark(id: number): void {
+  if (state.bookmarks.has(id)) {
+    state.bookmarks.delete(id);
+  } else {
+    state.bookmarks.add(id);
+  }
+  saveBookmarks(state.bookmarks);
+}
+
+/**
+ * 問題文・解説・選択肢・コード・分野名を対象に部分一致で検索する。
+ * 「equals」「instanceof」のような技術用語でも、日本語の説明文でも引っかかるようにするため、
+ * 問題を構成するほぼすべてのテキストを対象にしている。
+ */
+function matchQuestion(question: SilverQuestion, query: string): boolean {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return false;
+
+  const haystack = [
+    question.question,
+    question.explanation,
+    TOPIC_META[question.topic].label,
+    ...question.choices,
+    ...(question.code ?? []),
+  ]
+    .join("\n")
+    .toLowerCase();
+
+  return haystack.includes(needle);
 }
 
 /** 論点ごとに「前回出題した亜種」を覚えておくキー */
@@ -285,6 +356,24 @@ function renderStart(): void {
         </div>
       </section>
 
+      <section class="card search-section">
+        <p class="section-label">(Search)</p>
+        <h2>問題を検索</h2>
+        <form id="search-form" class="search-form">
+          <input
+            type="search"
+            id="search-input"
+            class="search-input"
+            placeholder="キーワードを入力（例: instanceof, equals, 例外）"
+            value="${escapeHtml(state.searchQuery)}"
+          />
+          <button type="submit" class="btn btn-ghost">検索</button>
+        </form>
+        <button type="button" class="btn-link bookmarks-link" id="bookmarks-btn">
+          ブックマーク一覧を見る（${state.bookmarks.size} 件）
+        </button>
+      </section>
+
       <section class="card info-card">
         <p class="section-label">(Exam format)</p>
         <h2>本試験の形式</h2>
@@ -312,6 +401,122 @@ function renderStart(): void {
 
   document.getElementById("practice-btn")!.addEventListener("click", () => startQuiz("practice"));
   document.getElementById("exam-btn")!.addEventListener("click", () => startQuiz("exam"));
+
+  document.getElementById("search-form")!.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const input = document.getElementById("search-input") as HTMLInputElement;
+    const query = input.value.trim();
+    if (!query) return;
+    state.searchQuery = query;
+    openList(
+      questions.filter((q) => matchQuestion(q, query)),
+      "search",
+    );
+  });
+
+  document.getElementById("bookmarks-btn")!.addEventListener("click", () => {
+    openList(
+      questions.filter((q) => state.bookmarks.has(q.id)),
+      "bookmarks",
+    );
+  });
+}
+
+function openList(results: SilverQuestion[], mode: ListMode): void {
+  state.listQuestions = results;
+  state.listMode = mode;
+  state.screen = "list";
+  render();
+}
+
+// -------------------------------------------------------------------- 一覧画面
+
+function renderList(): void {
+  const items = state.listQuestions;
+
+  const title = state.listMode === "search" ? `「${state.searchQuery}」の検索結果` : "ブックマーク";
+  const emptyMessage =
+    state.listMode === "search"
+      ? "該当する問題が見つかりませんでした。別のキーワードを試してください。"
+      : "まだブックマークした問題がありません。問題を解いているときに ☆ を押すとここに追加されます。";
+
+  const itemsHtml = items
+    .map((question, index) => {
+      const bookmarked = state.bookmarks.has(question.id);
+      return `
+        <div class="list-item">
+          <span class="list-item-no">${escapeHtml(TOPIC_META[question.topic].label)}</span>
+          <button type="button" class="list-item-open" data-open-index="${index}">
+            <span class="list-item-title">${escapeHtml(question.question.slice(0, 60))}</span>
+          </button>
+          <button
+            type="button"
+            class="bookmark-toggle ${bookmarked ? "active" : ""}"
+            data-bookmark-id="${question.id}"
+            aria-pressed="${bookmarked}"
+            aria-label="${bookmarked ? "ブックマークを解除" : "ブックマークに追加"}"
+          >${bookmarked ? "★" : "☆"}</button>
+        </div>
+      `;
+    })
+    .join("");
+
+  app.innerHTML = `
+    <main class="container">
+      <header class="quiz-header">
+        <div class="quiz-meta">
+          <span>${escapeHtml(title)}（${items.length} 件）</span>
+          <span class="quiz-meta-actions">
+            <button class="btn-link" id="list-back-btn" type="button">トップへ</button>
+          </span>
+        </div>
+      </header>
+
+      <section class="card list-section">
+        ${items.length === 0 ? `<p class="list-empty">${escapeHtml(emptyMessage)}</p>` : `<div class="list-items">${itemsHtml}</div>`}
+      </section>
+    </main>
+  `;
+
+  document.getElementById("list-back-btn")!.addEventListener("click", () => {
+    state.screen = "start";
+    render();
+  });
+
+  document.querySelectorAll("[data-open-index]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const index = Number(el.getAttribute("data-open-index"));
+      openQuestionFromList(index);
+    });
+  });
+
+  document.querySelectorAll("[data-bookmark-id]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const id = Number(el.getAttribute("data-bookmark-id"));
+      toggleBookmark(id);
+      // ブックマーク一覧は解除したその場で消す。検索結果はブックマーク状態と無関係なので残す
+      if (state.listMode === "bookmarks") {
+        state.listQuestions = state.listQuestions.filter((q) => q.id !== id);
+      }
+      renderList();
+    });
+  });
+}
+
+/** 一覧画面から問題を開く。一覧内の他の問題へも「次へ」で順送りできるようにする */
+function openQuestionFromList(index: number): void {
+  const picked = state.listQuestions.map(shuffleChoices);
+
+  state.mode = "practice";
+  state.quizQuestions = picked;
+  state.currentIndex = index;
+  state.selections = picked.map(() => []);
+  state.checked = picked.map(() => false);
+  state.quizReturnScreen = "list";
+  state.remainingSec = 0;
+  stopTimer();
+  state.screen = "quiz";
+  render();
 }
 
 // -------------------------------------------------------------------- 出題画面
@@ -401,6 +606,8 @@ function renderQuiz(): void {
       : `<span>${escapeHtml(TOPIC_META[question.topic].label)}</span>`;
 
   const isLast = state.currentIndex === total - 1;
+  const isListSession = state.quizReturnScreen === "list";
+  const bookmarked = state.bookmarks.has(question.id);
 
   app.innerHTML = `
     <main class="container">
@@ -408,7 +615,7 @@ function renderQuiz(): void {
         <div class="quiz-meta">
           <span>Q ${state.currentIndex + 1} / ${total}</span>
           <span class="quiz-meta-actions">
-            <button class="btn-link" id="quit-btn" type="button">中断</button>
+            <button class="btn-link" id="quit-btn" type="button">${isListSession ? "一覧へ" : "中断"}</button>
             ${timerHtml}
           </span>
         </div>
@@ -418,7 +625,16 @@ function renderQuiz(): void {
       </header>
 
       <section class="card question-card">
-        <p class="selection-guide">${multiple ? `${question.correct.length}つ選びなさい。` : "1つ選びなさい。"}</p>
+        <div class="question-card-head">
+          <p class="selection-guide">${multiple ? `${question.correct.length}つ選びなさい。` : "1つ選びなさい。"}</p>
+          <button
+            type="button"
+            class="bookmark-toggle ${bookmarked ? "active" : ""}"
+            id="bookmark-btn"
+            aria-pressed="${bookmarked}"
+            aria-label="${bookmarked ? "ブックマークを解除" : "ブックマークに追加"}"
+          >${bookmarked ? "★" : "☆"}</button>
+        </div>
         <p class="question-desc">${escapeHtml(question.question)}</p>
 
         ${renderCode(question)}
@@ -435,7 +651,7 @@ function renderQuiz(): void {
             state.mode === "practice" && !isChecked
               ? `<button class="btn btn-primary" id="check-btn" ${selected.length === 0 ? "disabled" : ""}>解答する</button>`
               : isLast
-                ? `<button class="btn btn-primary" id="finish-btn">${state.mode === "exam" ? "採点する" : "結果を見る"}</button>`
+                ? `<button class="btn btn-primary" id="finish-btn">${isListSession ? "一覧に戻る" : state.mode === "exam" ? "採点する" : "結果を見る"}</button>`
                 : `<button class="btn btn-primary" id="next-btn">次の問題へ</button>`
           }
         </div>
@@ -452,8 +668,12 @@ function renderQuiz(): void {
 
   document.getElementById("quit-btn")!.addEventListener("click", () => {
     stopTimer();
-    state.screen = "start";
+    state.screen = state.quizReturnScreen;
     render();
+  });
+  document.getElementById("bookmark-btn")?.addEventListener("click", () => {
+    toggleBookmark(question.id);
+    renderQuiz();
   });
   document.getElementById("prev-btn")?.addEventListener("click", () => {
     state.currentIndex -= 1;
@@ -467,7 +687,15 @@ function renderQuiz(): void {
     state.currentIndex += 1;
     render();
   });
-  document.getElementById("finish-btn")?.addEventListener("click", finishExam);
+  document.getElementById("finish-btn")?.addEventListener("click", () => {
+    if (isListSession) {
+      stopTimer();
+      state.screen = "list";
+      render();
+    } else {
+      finishExam();
+    }
+  });
 }
 
 function toggleChoice(index: number, multiple: boolean): void {
@@ -601,6 +829,7 @@ function startQuiz(mode: Mode): void {
   state.selections = picked.map(() => []);
   state.checked = picked.map(() => false);
   state.screen = "quiz";
+  state.quizReturnScreen = "start";
 
   if (mode === "exam") {
     // 問題数が本試験より少ない場合は、1問あたりの持ち時間に合わせて短縮する
@@ -625,6 +854,9 @@ function render(): void {
       break;
     case "result":
       renderResult();
+      break;
+    case "list":
+      renderList();
       break;
   }
 }
