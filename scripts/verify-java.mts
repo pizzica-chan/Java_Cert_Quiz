@@ -80,8 +80,14 @@ type RunResult =
   | { kind: "output"; stdout: string }
   | { kind: "exception"; type: string; stderr: string };
 
-async function compileAndRun(className: string, source: string): Promise<RunResult> {
-  const dir = join(WORK_DIR, className);
+async function compileAndRun(
+  questionId: number,
+  className: string,
+  source: string,
+): Promise<RunResult> {
+  // className は問題どうしで重複しうるため、問題 ID で作業ディレクトリを分ける。
+  // 分けないと、並行実行中に別の問題のソースを上書き・実行してしまう。
+  const dir = join(WORK_DIR, `q${questionId}_${className}`);
   mkdirSync(dir, { recursive: true });
   const file = join(dir, `${className}.java`);
   writeFileSync(file, source, "utf8");
@@ -263,7 +269,7 @@ async function main(): Promise<void> {
       const q = queue.shift();
       if (!q) return;
 
-      const actual = await compileAndRun(q.className!, q.code!.join("\n"));
+      const actual = await compileAndRun(q.id, q.className!, q.code!.join("\n"));
       const mismatch = compareResult(q.expected!, actual);
       if (mismatch) {
         issues.push({ questionId: q.id, rule: "expected-mismatch", message: mismatch });

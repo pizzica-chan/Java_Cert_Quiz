@@ -8,6 +8,8 @@ import { extraQuestions2 } from "./extra2";
 import { extraQuestions3 } from "./extra3";
 import { extraQuestions4 } from "./extra4";
 import { extraQuestions5 } from "./extra5";
+import { extraQuestions6 } from "./extra6";
+import { extraQuestions7 } from "./extra7";
 
 /** Silver SE 11（1Z0-815）の全問題 */
 export const silverQuestions: SilverQuestion[] = [
@@ -20,4 +22,6 @@ export const silverQuestions: SilverQuestion[] = [
   ...extraQuestions3,
   ...extraQuestions4,
   ...extraQuestions5,
+  ...extraQuestions6,
+  ...extraQuestions7,
 ];

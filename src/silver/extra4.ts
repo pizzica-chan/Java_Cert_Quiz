@@ -124,7 +124,7 @@ export const extraQuestions4: SilverQuestion[] = [
     topic: "exceptions",
     variantOf: "exceptions-throws-override",
     question: "次のコードをコンパイルした場合の結果はどれか。1つ選びなさい。",
-    className: "Impl2",
+    className: "Handler",
     code: [
       "import java.io.IOException;",
       "",
@@ -133,7 +133,7 @@ export const extraQuestions4: SilverQuestion[] = [
       "    }",
       "}",
       "",
-      "public class Impl2 extends Base {",
+      "public class Handler extends Base {",
       "    @Override",
       "    void run() throws IOException {",
       "    }",
@@ -151,7 +151,7 @@ export const extraQuestions4: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "compile-error" },
     explanation:
-      "オーバーライドでは、親が宣言していない検査例外を新たに投げると宣言できません。Base 型の変数経由で run() を呼ぶ利用者は例外処理を書いていないため、実体が Impl2 のときだけ想定外の例外が飛んでくると破綻するからです。例外を減らす（宣言しない、または派生型に狭める）のは許されます。戻り値やアクセス修飾子の規則と同じく、「派生型は基底型として通用しなければならない」という原則の現れです。なお非検査例外にはこの制限がなく、いつでも投げられます。",
+      "オーバーライドでは、親が宣言していない検査例外を新たに投げると宣言できません。Base 型の変数経由で run() を呼ぶ利用者は例外処理を書いていないため、実体が Handler のときだけ想定外の例外が飛んでくると破綻するからです。例外を減らす（宣言しない、または派生型に狭める）のは許されます。戻り値やアクセス修飾子の規則と同じく、「派生型は基底型として通用しなければならない」という原則の現れです。なお非検査例外にはこの制限がなく、いつでも投げられます。",
   },
   {
     id: 306,
@@ -223,7 +223,7 @@ export const extraQuestions4: SilverQuestion[] = [
     question: "次のコードをコンパイルした場合の結果はどれか。1つ選びなさい。",
     className: "Reassign",
     code: [
-      "class Handle2 implements AutoCloseable {",
+      "class Session implements AutoCloseable {",
       "    @Override",
       "    public void close() {",
       "    }",
@@ -231,8 +231,8 @@ export const extraQuestions4: SilverQuestion[] = [
       "",
       "public class Reassign {",
       "    public static void main(String[] args) {",
-      "        try (Handle2 h = new Handle2()) {",
-      "            h = new Handle2();",
+      "        try (Session h = new Session()) {",
+      "            h = new Session();",
       "        }",
       "    }",
       "}",
@@ -359,7 +359,7 @@ export const extraQuestions4: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "3 4 3" },
     explanation:
-      "Math.round は「最も近い整数、ちょうど中間なら正の無限大方向」へ丸めるため 2.5 は 3 になります（-2.5 は -2 になる点が四捨五入と異なります）。実装上は floor(x + 0.5) と等価で、この定義のおかげで分岐なしに計算できます。Math のメソッドはすべて static で、インスタンスを作らずに使う純粋な関数として提供されています。なお round の戻り値は引数が double なら long、float なら int になるため、int 変数へ代入する際はキャストが必要になることがあります。",
+      "Math.round は「最も近い整数、ちょうど中間なら正の無限大方向」へ丸めるため 2.5 は 3 になります（-2.5 は -2 になる点が四捨五入と異なります）。「常に正の方向へ寄せる」と決めておくことで、中間値の扱いが一意に定まります。Math のメソッドはすべて static で、インスタンスを作らずに使う純粋な関数として提供されています。なお round の戻り値は引数が double なら long、float なら int になるため、int 変数へ代入する際はキャストが必要になることがあります。",
   },
   {
     id: 315,

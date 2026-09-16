@@ -126,7 +126,7 @@ export const extraQuestions2: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "false" },
     explanation:
-      "instanceof は null に対して常に false を返し、例外は投げません。null は「どのインスタンスでもない」ので、どの型のインスタンスかと問われれば否、という一貫した扱いです。この仕様のおかげで、if (o instanceof String s) と書くだけで null チェックと型チェックを同時に済ませられます。equals の実装で instanceof を使うのが定石なのも、引数が null でも例外にならず false を返せるからです。逆に getClass() を使う実装では、事前の null チェックが別途必要になります。",
+      "instanceof は null に対して常に false を返し、例外は投げません。null は「どのインスタンスでもない」ので、どの型のインスタンスかと問われれば否、という一貫した扱いです。この仕様のおかげで、if (o instanceof String) でキャストの可否を調べる際に、事前の null チェックを別途書く必要がありません。equals の実装で instanceof を使うのが定石なのも、引数が null でも例外にならず false を返せるからです。逆に getClass() を使う実装では、事前の null チェックが別途必要になります。",
   },
   {
     id: 237,

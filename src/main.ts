@@ -65,7 +65,7 @@ function shuffle<T>(array: T[]): T[] {
 }
 
 /** 論点ごとに「前回出題した亜種」を覚えておくキー */
-const LAST_VARIANT_KEY = "java-silver-quiz-last-variants";
+const LAST_VARIANT_KEY = "java-cert-quiz-last-variants";
 
 function loadLastVariants(): Record<string, number> {
   try {
@@ -394,8 +394,9 @@ function renderQuiz(): void {
     `
     : "";
 
+  // タイマーは計測中だけ出す。採点後の見直しでは止まった時刻が残り時間に見えてしまう
   const timerHtml =
-    state.mode === "exam"
+    state.mode === "exam" && state.timerId !== null
       ? `<span id="exam-timer" class="exam-timer">${formatTime(state.remainingSec)}</span>`
       : `<span>${escapeHtml(TOPIC_META[question.topic].label)}</span>`;
 
