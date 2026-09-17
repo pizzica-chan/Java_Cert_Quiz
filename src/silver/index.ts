@@ -16,6 +16,7 @@ import { variantQuestions5 } from "./variants5";
 import { variantQuestions6 } from "./variants6";
 import { variantQuestions7 } from "./variants7";
 import { variantQuestions8 } from "./variants8";
+import { multiChoiceQuestions } from "./multi";
 
 /** Silver SE 11（1Z0-815）の全問題 */
 export const silverQuestions: SilverQuestion[] = [
@@ -36,4 +37,5 @@ export const silverQuestions: SilverQuestion[] = [
   ...variantQuestions6,
   ...variantQuestions7,
   ...variantQuestions8,
+  ...multiChoiceQuestions,
 ];
