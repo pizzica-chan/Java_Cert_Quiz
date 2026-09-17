@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && npm run verify:java && vite build",
+    "build:deploy": "tsc && vite build",
     "verify:java": "tsx scripts/verify-java.mts",
-    "verify:questions": "tsx scripts/validate-questions.mts",
     "preview": "vite preview",
     "deploy": "npm run build && wrangler deploy"
   },

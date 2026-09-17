@@ -6,7 +6,13 @@
     // Cloudflare Workers Builds (Git連携の自動デプロイ) が deploy 前に
     // このコマンドを実行してくれる。これが無いと dist が無いまま
     // wrangler deploy が走ってエラーになる。
-    "command": "npm run build"
+    //
+    // "npm run build"（verify:java = JDK 11 での実機検証込み）ではなく
+    // build:deploy（tsc + vite build のみ）を使う。Workers Builds の
+    // ビルドイメージには Go/Node.js/Python/Ruby はあるが Java は無く、
+    // JDK 前提のコマンドをここで動かすと自動デプロイが必ず失敗するため。
+    // 実機検証は手元の `npm run build` /「JDK検証」ワークフロー(CI)で行う。
+    "command": "npm run build:deploy"
   },
   "assets": {
     "directory": "./dist",

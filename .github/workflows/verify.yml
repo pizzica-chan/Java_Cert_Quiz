@@ -1,0 +1,30 @@
+name: 問題データの検証
+
+# Cloudflare Workers Builds は JDK を持たないため、デプロイ時のビルドは
+# tsc + vite build のみ（build:deploy）で JDK 実機検証を含めていない。
+# その代わりにこの CI が push / PR のたびに JDK 11 での実機検証を含めた
+# フルビルド（npm run build）を実行し、問題データの正しさを継続的に担保する。
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
+
+      - run: npm ci
+
+      - run: npm run build

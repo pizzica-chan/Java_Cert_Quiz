@@ -84,6 +84,20 @@ npm run build
 npm run verify:java
 ```
 
+## デプロイ
+
+Cloudflare Workers（静的アセット配信）にデプロイします。
+
+```bash
+npm run deploy
+```
+
+`npm run build`（JDK 11 実機検証込み）のあと `wrangler deploy` を実行します。事前に `npx wrangler login` が必要です。
+
+Git push 連携の自動デプロイ（Cloudflare Workers Builds）も有効にしていますが、そのビルド環境には JDK が無いため、
+`wrangler.jsonc` の `build.command` は実機検証を含まない `npm run build:deploy`（`tsc && vite build` のみ）を使っています。
+問題データの実機検証は手元の `npm run build` と、push/PR ごとに走る [.github/workflows/verify.yml](.github/workflows/verify.yml) で行います。
+
 ## 技術スタック
 
 - TypeScript

@@ -127,6 +127,18 @@ npm run build         # tsc → verify:java → vite build
 検証スクリプトは JDK 11 を自動検出する（`JAVA11_HOME` でも指定可）。
 **JDK 8 や 17 ではなく 11 を使う。** SE 11 の仕様で正解が決まるため。
 
+### デプロイのビルドは検証を含まない
+
+Cloudflare Workers Builds（Git push 連携の自動デプロイ）のビルドイメージには
+Go / Node.js / Python / Ruby はあるが **Java が無い**。そのため `wrangler.jsonc`
+の `build.command` は `npm run build`（JDK 11 実機検証込み）ではなく、
+`npm run build:deploy`（`tsc && vite build` のみ）を使っている。
+JDK 前提のコマンドをそこに置くと自動デプロイが必ず失敗する。
+
+問題データの実機検証は手元の `npm run build` と、push/PR ごとに走る
+[.github/workflows/verify.yml](.github/workflows/verify.yml)（JDK 11 セットアップ込み）で担保している。
+**`build.command` を安易に `npm run build` へ戻さないこと。**
+
 ### 検証で落ちる項目
 
 - `expected-mismatch`: 期待した結果と実機の結果が違う（出力・コンパイルエラーの行・例外の型）
