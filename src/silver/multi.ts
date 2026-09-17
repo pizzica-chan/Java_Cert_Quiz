@@ -386,10 +386,46 @@ export const multiChoiceQuestions: SilverQuestion[] = [
       "このモジュールを requires した側は、自動的に java.sql も使えるようになる",
     ],
     correct: [0, 1, 2],
-    expected: {
-      kind: "not-verifiable",
-      reason:
-        "requires/exports の実際の可視性は参照側の別モジュールを用意してコンパイルしないと確認できない。単一ファイルの javac / java では検証できないため、内容は目視レビューで担保する。",
+    expected: { kind: "output", stdout: "ok" },
+    // 選択肢1「exports したパッケージの public 型は他モジュールから参照できる」を、
+    // 提供側 com.example.app と利用側 com.example.client の2モジュールで実機検証する。
+    // requires java.sql（選択肢0）や requires transitive の要否（選択肢4の裏付け）は
+    // 単一選択の Q11/Q622/Q623/Q626 で別途検証済みなので、ここでは重複させない。
+    moduleSetup: {
+      main: "com.example.client/com.example.client.Main",
+      sources: [
+        {
+          module: "com.example.app",
+          path: "module-info.java",
+          content: ["module com.example.app {", "    requires java.sql;", "    exports com.example.app.api;", "}"],
+        },
+        {
+          module: "com.example.app",
+          path: "com/example/app/api/Api.java",
+          content: ["package com.example.app.api;", "", "public class Api {", "}"],
+        },
+        {
+          module: "com.example.client",
+          path: "module-info.java",
+          content: ["module com.example.client {", "    requires com.example.app;", "}"],
+        },
+        {
+          module: "com.example.client",
+          path: "com/example/client/Main.java",
+          content: [
+            "package com.example.client;",
+            "",
+            "import com.example.app.api.Api;",
+            "",
+            "public class Main {",
+            "    public static void main(String[] args) {",
+            "        new Api();",
+            '        System.out.println("ok");',
+            "    }",
+            "}",
+          ],
+        },
+      ],
     },
     explanation:
       "requires は「自分がその依存を使うための宣言」で、exports は「指定したパッケージの public 型を他モジュールへ公開する宣言」です。exports されていないパッケージは、public 型であっても他モジュールからは見えません。また requires（transitive を付けない通常の requires）は自分のためだけの依存であり、このモジュールを requires した側に java.sql が自動的に引き継がれることはありません。引き継ぎたい場合は requires transitive java.sql と書く必要があります。",
