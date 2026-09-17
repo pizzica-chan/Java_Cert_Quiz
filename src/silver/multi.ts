@@ -65,7 +65,7 @@ export const multiChoiceQuestions: SilverQuestion[] = [
     ],
     choices: [
       "コンパイルは成功する",
-      "byte から short への代入にキャストは不要である",
+      "byte から int への直接代入にはキャストが必要である",
       "byte → short → int → long の順に暗黙の拡大変換ができる",
       "実行時に例外がスローされる",
       "l の値は 10 になる",
