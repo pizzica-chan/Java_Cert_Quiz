@@ -31,6 +31,12 @@
   padding: 0;
 }
 
+html {
+  /* Safari が狭い画面で行ごとに文字を拡大し、コード枠がバラバラになるのを防ぐ */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   font-family: var(--font-sans);
   background: var(--bg);
@@ -574,6 +580,8 @@ h1,
   min-width: 0;
   background: var(--bg-code);
   margin-bottom: 1.35rem;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 .code-toolbar {
