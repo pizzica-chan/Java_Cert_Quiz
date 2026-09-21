@@ -286,7 +286,7 @@ export const extraQuestions1: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "3 -1294967296" },
     explanation:
-      "double から int へのキャストは四捨五入ではなく、0 方向へ小数部を切り詰める（truncate toward zero）ため 3 になります。long から int へは値が int の範囲に収まっても暗黙変換できず、(int) が必要です。ここでは 3000000000 を狭めるとビット列が符号付き 32 ビットとして解釈され -1294967296 になります。byte / short / char への代入は、int / byte / short / char 型のコンパイル時定数で範囲内ならキャストなしでも通りますが、long や double の定数は値が収まっても不可です。この問題の double→int や long→int は明示的なキャストが要り、書いた時点で値の破損はプログラマの責任になります。正の小数を整数に丸めるなら (int) Math.round(d) も使えます（round(double) の戻り値は long。同点は正の無限大方向で、例として round(-1.5) は -1）。",
+      "double から int へのキャストは四捨五入ではなく、0 方向へ小数部を切り詰める（truncate toward zero）ため 3 になります。long から int へは値が int の範囲に収まっても暗黙変換できず、(int) が必要です。ここでは 3000000000 を狭めるとビット列が符号付き 32 ビットとして解釈され -1294967296 になります。byte / short / char への代入は、int / byte / short / char 型のコンパイル時定数で範囲内ならキャストなしでも通りますが、long や double の定数は値が収まっても不可です。この問題の double→int や long→int は明示的なキャストが要り、書いた時点で値の破損はプログラマの責任になります。正の小数を整数に丸めるなら (int) Math.round(d) も使えます（round(double) の戻り値は long なので、int へ入れるにはキャストが要ります）。",
   },
   {
     id: 219,
