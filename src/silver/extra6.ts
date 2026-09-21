@@ -338,7 +338,7 @@ export const extraQuestions6: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "exception", type: "NullPointerException" },
     explanation:
-      "String を使った switch は、内部でハッシュ値を求めて比較する仕組みのため、対象が null だとその時点で NullPointerException になります。default があっても捕まりません。default は「どの case にも一致しなかった場合」であって「値が無い場合」ではない、という区別が重要です。文字列で分岐する箇所では switch に渡す前に null を弾く必要があります。なお Java 21 以降のパターンマッチングでは case null を書けるようになりましたが、SE 11 では不可です。",
+      "String を使った switch は、内部で hashCode などを使って比較する仕組みのため、対象が null だとその時点で NullPointerException になります。default があっても捕まりません。default は「どの case にも一致しなかった場合」であって「値が無い場合」ではない、という区別が重要です。文字列で分岐する箇所では switch に渡す前に null を弾く必要があります。（参考: Java 21 以降の switch では case null が書けるが、本試験範囲の SE 11 では不可。）",
   },
   {
     id: 413,
