@@ -351,7 +351,7 @@ export const variantQuestions2: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "[y]" },
     explanation:
-      'remove には remove(int index) と remove(Object o) があり、引数が String なので後者が選ばれ、"x" と等しい要素が削除されます。要素型が String のときは直感どおりに動きますが、List<Integer> で remove(1) と書くと int 版が優先されて「インデックス 1 の要素」が消えます。同じ名前で意味の違う操作が同居しているのは、List が登場した時点では前者しかなく、ジェネリクス導入後に後者が加わったという経緯によるものです。要素を値で消したいときは remove(Integer.valueOf(1)) のように型を明示するのが安全です。',
+      'remove には remove(int index) と remove(Object o) があり、引数が String なので後者が選ばれ、"x" と等しい要素が削除されます。要素型が String のときは直感どおりに動きますが、List<Integer> で remove(1) と書くと int 版が優先されて「インデックス 1 の要素」が消えます。remove(int) と remove(Object) は Java 1.2 のコレクション API から両方あり、remove(1) が値削除に見えてしまうのは Java 5 以降オートボクシングで int リテラルが両方に適合し、より具体的な int 版が選ばれるためです。要素を値で消したいときは remove(Integer.valueOf(1)) のように型を明示するのが安全です。',
   },
   {
     id: 131,

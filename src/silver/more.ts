@@ -126,7 +126,7 @@ export const moreQuestions: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "C 68" },
     explanation:
-      "char は内部的に数値（Unicode のコードポイント）として扱われます。'A' は 65 で、複合代入 c += 2 により 67、つまり 'C' になります。char を println に単独で渡すと文字として出力されるため C と表示されます。一方 c + 1 は算術演算で int に昇格するため 68 という数値になります。",
+      "char は UTF-16 の 16 ビット符号単位として数値演算されます（基本多言語面の 'A' ではコードポイント 65 と一致します）。'A' は 65 で、複合代入 c += 2 により 67、つまり 'C' になります。char を println に単独で渡すと文字として出力されるため C と表示されます。一方 c + 1 は算術演算で int に昇格するため 68 という数値になります。",
   },
   {
     id: 17,

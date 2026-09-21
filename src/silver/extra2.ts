@@ -85,7 +85,7 @@ export const extraQuestions2: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "5 5" },
     explanation:
-      "代入式（= を含む式）は値を返す式であり、単独では式文として文になります。代入した値そのものが式の結果です。さらに代入は右結合なので a = (b = 5) と解釈され、b に 5 が入り、その結果である 5 が a にも入ります。代入が値を返す仕様のおかげで while ((line = read()) != null) のような書き方ができます。一方で if (a = b) のような書き間違いも生みますが、Java では条件式に boolean しか書けないため、この種の typo は boolean 変数どうしでない限りコンパイルエラーで検出されます。",
+      "代入式（= を含む式）は値を返す式であり、単独では式文として文になります。代入した値そのものが式の結果です。さらに代入は右結合なので a = (b = 5) と解釈され、b に 5 が入り、その結果である 5 が a にも入ります。代入が値を返す仕様のおかげで while ((line = read()) != null) のような書き方ができます。一方 int どうしの if (a = b) のような typo はコンパイルエラーになりますが、代入式の型が boolean または Boolean なら if (flag = true) などはコンパイルできます。",
   },
   {
     id: 235,
@@ -364,7 +364,7 @@ export const extraQuestions2: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "exception", type: "java.util.ConcurrentModificationException" },
     explanation:
-      "拡張 for 文は内部でイテレータを使っており、イテレータは生成時点のリストの変更回数を記憶しています。ループ中にリスト側の remove を呼ぶと変更回数が食い違い、次の走査時に ConcurrentModificationException になります。これは「壊れた結果を黙って返すより、早く確実に失敗させる」というフェイルファストの設計です。要素を消しながら走査したい場合は、イテレータ自身の remove を使うか、removeIf を使います。名前に Concurrent とありますが、単一スレッドでも発生する点に注意してください。",
+      "List に対する拡張 for 文は内部でイテレータを使い、イテレータは生成時点のリストの変更回数を記憶しています（配列の拡張 for は添字で走査し、イテレータは使いません）。ループ中にリスト側の remove を呼ぶと変更回数が食い違い、次の走査時に ConcurrentModificationException になります。これは「壊れた結果を黙って返すより、早く確実に失敗させる」というフェイルファストの設計です。要素を消しながら走査したい場合は、イテレータ自身の remove を使うか、removeIf を使います。名前に Concurrent とありますが、単一スレッドでも発生する点に注意してください。",
   },
 
   // ============================================================ 配列 (arrays)
@@ -505,6 +505,6 @@ export const extraQuestions2: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "[1, 2, 3]" },
     explanation:
-      "Arrays.sort は渡された配列そのものを並べ替えます（破壊的操作）。戻り値は無く、元の配列が変わる点に注意してください。Arrays.toString は要素をカンマ区切りで整形した文字列を返すメソッドで、配列を直接 println に渡すとクラス名@16進表記が出てしまう問題を回避できます。配列が toString をまともに実装していないのは、配列が言語組み込みの型で Object の既定実装をそのまま使うためです。この不便さを補うために Arrays クラスにユーティリティが集められている、という関係を理解しておくと API を探しやすくなります。",
+      "Arrays.sort は渡された配列そのものを並べ替えます（破壊的操作）。戻り値は無く、元の配列が変わる点に注意してください。Arrays.toString は要素をカンマ区切りで整形した文字列を返すメソッドで、int[] などを println に Object として直接渡したときのクラス名@16進表記（例: [I@...）を避けられます（char[] は print / println に中身を出す専用オーバーロードがあるため当てはまりません）。配列が toString をまともに実装していないのは、配列が言語組み込みの型で Object の既定実装をそのまま使うためです。この不便さを補うために Arrays クラスにユーティリティが集められている、という関係を理解しておくと API を探しやすくなります。",
   },
 ];

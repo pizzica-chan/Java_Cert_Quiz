@@ -673,7 +673,7 @@ export const variantQuestions8: SilverQuestion[] = [
       ],
     },
     explanation:
-      "java.base には Object や String、コレクションなど言語の土台となる型が含まれ、すべてのモジュールが暗黙的に依存します。java.se は Java SE 全体を束ねる集約モジュールで、暗黙にはなりません。例外なく全員が必要とするものだけを暗黙にする、という判断は、java.lang が import なしで使えるのと同じ考え方です。裏を返せば、java.sql や java.logging のようにすべてのアプリが使うとは限らないモジュールは、必ず明示する必要があります。",
+      "java.base には Object や String、コレクションなど言語の土台となる型が含まれ、すべてのモジュールが暗黙的に依存します。java.se は Java SE 全体を束ねる集約モジュールで、暗黙にはなりません。例外なく全員が必要とするものだけを暗黙にする、という判断は、java.lang が import なしで使えるのと同じ考え方です。java.sql や java.logging など java.base 外の API を使うときは requires で明示するか、requires transitive でそれらを引き継ぐモジュール（java.se など）を依存に入れます。個別の requires が不要になるのは、そうした集約・推移的依存がある場合に限られます。",
   },
   {
     id: 625,
