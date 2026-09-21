@@ -15,7 +15,7 @@ const EXAM = {
 type Screen = "start" | "quiz" | "result" | "list";
 type Mode = "practice" | "exam";
 /** 問題一覧画面（"list"）を何のために開いたか。空一覧時のメッセージや、一覧内での挙動を左右する */
-type ListMode = "search" | "bookmarks";
+type ListMode = "search" | "bookmarks" | "mistakes";
 
 interface AppState {
   screen: Screen;
@@ -33,6 +33,8 @@ interface AppState {
   timerId: number | null;
   /** ブックマークした問題の id */
   bookmarks: Set<number>;
+  /** 間違えた問題の id（復習用・localStorage と同期） */
+  wrongAnswers: Set<number>;
   /** 検索欄に残す直前の入力（トップに戻ったときに保持する） */
   searchQuery: string;
   /** 問題一覧画面に表示している問題（検索結果 or ブックマーク） */
@@ -56,6 +58,7 @@ const state: AppState = {
   remainingSec: 0,
   timerId: null,
   bookmarks: loadBookmarks(),
+  wrongAnswers: loadWrongAnswers(),
   searchQuery: "",
   listQuestions: [],
   listMode: "search",
@@ -102,6 +105,40 @@ function saveBookmarks(bookmarks: Set<number>): void {
   } catch {
     // プライベートモードや容量超過は無視する（ブックマーク自体は続けられる）
   }
+}
+
+/** 間違えた問題 id を保存するキー */
+const WRONG_ANSWERS_KEY = "java-cert-quiz-wrong-answers";
+
+function loadWrongAnswers(): Set<number> {
+  try {
+    const raw = localStorage.getItem(WRONG_ANSWERS_KEY);
+    const parsed = raw ? (JSON.parse(raw) as unknown) : null;
+    return Array.isArray(parsed) ? new Set(parsed.filter((v): v is number => typeof v === "number")) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveWrongAnswers(wrongAnswers: Set<number>): void {
+  try {
+    localStorage.setItem(WRONG_ANSWERS_KEY, JSON.stringify([...wrongAnswers]));
+  } catch {
+    // プライベートモードや容量超過は無視する
+  }
+}
+
+/** 不正解だった問題を復習リストに追加する（既にあればそのまま） */
+function recordWrongAnswer(id: number): void {
+  if (state.wrongAnswers.has(id)) return;
+  state.wrongAnswers.add(id);
+  saveWrongAnswers(state.wrongAnswers);
+}
+
+function removeWrongAnswer(id: number): void {
+  if (!state.wrongAnswers.has(id)) return;
+  state.wrongAnswers.delete(id);
+  saveWrongAnswers(state.wrongAnswers);
 }
 
 function toggleBookmark(id: number): void {
@@ -335,9 +372,11 @@ function renderStart(): void {
   }).join("");
 
   const allSelected = state.topic === "all";
+  const selectedTopicLabel =
+    state.topic === "all" ? "全分野" : TOPIC_META[state.topic].label;
 
   app.innerHTML = `
-    <main class="container">
+    <main class="container start-page">
       <header class="hero">
         <h1 class="hero-title">Java<br />Silver SE 11<br />対策クイズ</h1>
         <p class="lead">
@@ -367,6 +406,18 @@ function renderStart(): void {
         </div>
       </section>
 
+      <div class="start-actions-dock" aria-label="クイズを開始">
+        <div class="start-actions-dock-inner">
+          <p class="start-actions-topic">
+            選択中: <strong>${escapeHtml(selectedTopicLabel)}</strong>
+          </p>
+          <div class="start-actions">
+            <button class="btn btn-primary btn-large" id="practice-btn" type="button">練習モードで始める</button>
+            <button class="btn btn-ghost" id="exam-btn" type="button">模擬試験モード（${EXAM.minutes}分）</button>
+          </div>
+        </div>
+      </div>
+
       <section class="card search-section">
         <p class="section-label">(Search)</p>
         <h2>問題を検索</h2>
@@ -383,6 +434,9 @@ function renderStart(): void {
         <button type="button" class="btn-link bookmarks-link" id="bookmarks-btn">
           ブックマーク一覧を見る（${state.bookmarks.size} 件）
         </button>
+        <button type="button" class="btn-link bookmarks-link" id="mistakes-btn">
+          間違えた問題を見る（${state.wrongAnswers.size} 件）
+        </button>
       </section>
 
       <section class="card info-card">
@@ -395,11 +449,6 @@ function renderStart(): void {
           <li data-index="04">複数選択は部分点なし。すべて正しく選んで初めて正解です</li>
         </ol>
       </section>
-
-      <div class="start-actions">
-        <button class="btn btn-primary btn-large" id="practice-btn">練習モードで始める</button>
-        <button class="btn btn-ghost" id="exam-btn">模擬試験モード（${EXAM.minutes}分）</button>
-      </div>
     </main>
   `;
 
@@ -431,6 +480,13 @@ function renderStart(): void {
       "bookmarks",
     );
   });
+
+  document.getElementById("mistakes-btn")!.addEventListener("click", () => {
+    openList(
+      questions.filter((q) => state.wrongAnswers.has(q.id)),
+      "mistakes",
+    );
+  });
 }
 
 function openList(results: SilverQuestion[], mode: ListMode): void {
@@ -446,21 +502,33 @@ function openList(results: SilverQuestion[], mode: ListMode): void {
 function renderList(): void {
   const items = state.listQuestions;
 
-  const title = state.listMode === "search" ? `「${state.searchQuery}」の検索結果` : "ブックマーク";
+  const title =
+    state.listMode === "search"
+      ? `「${state.searchQuery}」の検索結果`
+      : state.listMode === "bookmarks"
+        ? "ブックマーク"
+        : "間違えた問題";
   const emptyMessage =
     state.listMode === "search"
       ? "該当する問題が見つかりませんでした。別のキーワードを試してください。"
-      : "まだブックマークした問題がありません。問題を解いているときに ☆ を押すとここに追加されます。";
+      : state.listMode === "bookmarks"
+        ? "まだブックマークした問題がありません。問題を解いているときに ☆ を押すとここに追加されます。"
+        : "まだ記録がありません。練習で不正解にした問題、模擬試験で不正解だった問題がここに自動で追加されます。";
 
   const itemsHtml = items
     .map((question, index) => {
       const bookmarked = state.bookmarks.has(question.id);
-      return `
-        <div class="list-item">
-          <span class="list-item-no">${escapeHtml(TOPIC_META[question.topic].label)}</span>
-          <button type="button" class="list-item-open" data-open-index="${index}">
-            <span class="list-item-title">${escapeHtml(question.question.slice(0, 60))}</span>
-          </button>
+      const actionHtml =
+        state.listMode === "mistakes"
+          ? `
+          <button
+            type="button"
+            class="list-remove-btn"
+            data-remove-wrong-id="${question.id}"
+            aria-label="一覧から削除"
+          >×</button>
+        `
+          : `
           <button
             type="button"
             class="bookmark-toggle ${bookmarked ? "active" : ""}"
@@ -468,6 +536,14 @@ function renderList(): void {
             aria-pressed="${bookmarked}"
             aria-label="${bookmarked ? "ブックマークを解除" : "ブックマークに追加"}"
           >${bookmarked ? "★" : "☆"}</button>
+        `;
+      return `
+        <div class="list-item">
+          <span class="list-item-no">${escapeHtml(TOPIC_META[question.topic].label)}</span>
+          <button type="button" class="list-item-open" data-open-index="${index}">
+            <span class="list-item-title">${escapeHtml(question.question.slice(0, 60))}</span>
+          </button>
+          ${actionHtml}
         </div>
       `;
     })
@@ -511,6 +587,15 @@ function renderList(): void {
       if (state.listMode === "bookmarks") {
         state.listQuestions = state.listQuestions.filter((q) => q.id !== id);
       }
+      renderList();
+    });
+  });
+
+  document.querySelectorAll("[data-remove-wrong-id]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const id = Number(el.getAttribute("data-remove-wrong-id"));
+      removeWrongAnswer(id);
+      state.listQuestions = state.listQuestions.filter((q) => q.id !== id);
       renderList();
     });
   });
@@ -697,6 +782,9 @@ function renderQuiz(): void {
   });
   document.getElementById("check-btn")?.addEventListener("click", () => {
     state.checked[state.currentIndex] = true;
+    if (!isCorrect(question, selected)) {
+      recordWrongAnswer(question.id);
+    }
     render();
   });
   document.getElementById("next-btn")?.addEventListener("click", () => {
@@ -734,6 +822,13 @@ function toggleChoice(index: number, multiple: boolean): void {
 
 function finishExam(): void {
   stopTimer();
+  if (state.mode === "exam") {
+    state.quizQuestions.forEach((q, i) => {
+      if (!isCorrect(q, state.selections[i] ?? [])) {
+        recordWrongAnswer(q.id);
+      }
+    });
+  }
   state.screen = "result";
   scrollToTop();
   render();

@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-このファイルは Claude Code (claude.ai/code) がこのリポジトリで作業する際のルールです。
+このファイルは Claude Code (claude.ai/code) および Cursor Agent がこのリポジトリで作業する際の**正本ルール**です。Cursor 側は [.cursor/rules/project-guide.mdc](.cursor/rules/project-guide.mdc) から本ファイルを参照するだけにし、規約本文はここだけを更新する。
 
 ## プロジェクト概要
 
