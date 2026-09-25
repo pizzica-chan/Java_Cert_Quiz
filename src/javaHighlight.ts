@@ -1,10 +1,10 @@
 const MODIFIERS =
-  /\b(public|private|protected|static|final|abstract|synchronized|volatile|native|transient|strictfp)\b/g;
+  /\b(public|private|protected|static|final|abstract|synchronized|volatile|native|transient|strictfp|sealed|non-sealed)\b/g;
 
 const PRIMITIVES = /\b(void|int|long|boolean|double|float|char|byte|short)\b/g;
 
 const KEYWORDS =
-  /\b(class|interface|enum|extends|implements|return|if|else|for|while|do|try|catch|finally|throw|throws|new|import|package|this|super|instanceof|switch|case|default|break|continue|assert)\b/g;
+  /\b(class|interface|enum|record|extends|implements|permits|return|if|else|for|while|do|try|catch|finally|throw|throws|new|import|package|this|super|instanceof|switch|case|default|break|continue|assert|yield)\b/g;
 
 const METHOD_NOT =
   /^(if|while|for|switch|catch|try|synchronized|return|throw|new|super|this)$/;
@@ -215,7 +215,7 @@ export function highlightJava(
   );
 
   work = mapPlain(work, (plain) =>
-    plain.replace(/\b(class|interface|enum)\s+([A-Za-z_]\w*)/g, (_, kw, name) => {
+    plain.replace(/\b(class|interface|enum|record)\s+([A-Za-z_]\w*)/g, (_, kw, name) => {
       const kwSpan = tok("tok-kw", kw, null);
       const nameSpan = tok("tok-class", name, name);
       return `${kwSpan} ${nameSpan}`;

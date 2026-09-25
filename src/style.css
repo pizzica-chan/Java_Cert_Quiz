@@ -92,6 +92,72 @@ h1,
   border-top: 1px solid var(--border);
 }
 
+.exam-section {
+  margin-bottom: 2.5rem;
+}
+
+.exam-section h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.15rem;
+  line-height: 1.1;
+}
+
+.exam-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+
+.exam-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  text-align: left;
+  font-family: var(--font-sans);
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  padding: 1rem 1rem 0.9rem;
+  cursor: pointer;
+  color: var(--text);
+  transition: background 0.15s, color 0.15s;
+}
+
+.exam-card:hover {
+  background: var(--accent-soft);
+}
+
+.exam-card.selected {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.exam-card-name {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.exam-card-code,
+.exam-card-count {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.exam-card.selected .exam-card-code,
+.exam-card.selected .exam-card-count {
+  color: rgba(243, 242, 238, 0.65);
+}
+
 .difficulty-section {
   margin-bottom: 0;
 }

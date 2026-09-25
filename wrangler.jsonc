@@ -7,7 +7,7 @@
     // このコマンドを実行してくれる。これが無いと dist が無いまま
     // wrangler deploy が走ってエラーになる。
     //
-    // "npm run build"（verify:java = JDK 11 での実機検証込み）ではなく
+    // "npm run build"（verify:java = JDK 11 / 17 での実機検証込み）ではなく
     // build:deploy（tsc + vite build のみ）を使う。Workers Builds の
     // ビルドイメージには Go/Node.js/Python/Ruby はあるが Java は無く、
     // JDK 前提のコマンドをここで動かすと自動デプロイが必ず失敗するため。

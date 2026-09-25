@@ -7,11 +7,17 @@
 Oracle Certified Java Programmer の対策クイズアプリ。
 フロントエンド完結（TypeScript + Vite、バニラ DOM）。詳細は [README.md](README.md) 参照。
 
-現在収録しているのは Silver SE 11（1Z0-815-JPN）のみだが、**将来 Gold などを追加する前提の構成**にしている。
+収録している試験区分は 2 つで、画面上で切り替えて使う。
 
-- 試験区分ごとに問題を分ける: Silver は [src/silver/](src/silver/)、Gold を作るなら `src/gold/`
-- [src/questions.ts](src/questions.ts) が全試験を結合する集約点。ここに新しい試験区分を足す
-- 出題範囲の型（`ExamTopic`）は現在 Silver 専用。Gold 追加時は試験区分ごとにトピックを分ける必要がある
+| 試験区分 | 試験番号 | 検証に使う JDK | 問題の置き場所 |
+|---|---|---|---|
+| Silver SE 11 | 1Z0-815-JPN | 11 | [src/silver/](src/silver/) |
+| Gold SE 17 | 1Z0-826-JPN | 17 | [src/gold/](src/gold/) |
+
+- 試験区分の設定（試験番号・JDK・出題数・制限時間・合格ライン・分野）は [src/quizTypes.ts](src/quizTypes.ts) の `EXAMS` にまとめている
+- [src/questions.ts](src/questions.ts) が全試験を結合する集約点。各問題に試験区分（`exam`）を付けて結合する。新しい試験区分はここに足す
+- 分野の型は試験区分ごとに分かれている（`SilverTopic` / `GoldTopic`）。キーは試験区分をまたいで重複しうる（`modules` など）ため、表示名は `topicMeta(exam, topic)` で引く
+- 問題 ID と論点キー（`variantOf`）は試験区分をまたいで一意にする。ブックマーク・復習リストは ID で保存しているため
 
 このプロジェクトの価値は **「正解が実機で裏取りされていること」** にある。
 その前提が崩れる変更（検証のスキップ、`not-verifiable` の濫用）は、アプリの存在意義を損なう。
@@ -26,14 +32,17 @@ Oracle Certified Java Programmer の対策クイズアプリ。
 
 ### 2. コードを伴う問題には必ず `expected` を書く
 
-`expected` は「この問題のコードを JDK 11 で実行したらこうなるはず」という宣言で、
+`expected` は「この問題のコードを、試験区分の JDK（Silver は 11、Gold は 17）で実行したらこうなるはず」という宣言で、
 `npm run verify:java` が実機の出力と突き合わせる。これが正解の根拠になる。
 
 ```ts
 expected: { kind: "output", stdout: "7 12" }        // 正常終了し、この標準出力になる
 expected: { kind: "compile-error", line: 5 }         // この行でコンパイルエラーになる
 expected: { kind: "exception", type: "ClassCastException" } // 実行時にこの例外で終了する
+expected: { kind: "exception", type: "IllegalStateException", stdout: "3" } // 「3 と出力された後」例外で終了する
 ```
+
+正解の選択肢が「X と出力された後、〜がスローされる」の形なら、`stdout` に X を書く（検証スクリプトが選択肢と照合する）。
 
 **`expected` を自分の記憶から書いて、検証を通さずに完了としないこと。**
 書いた期待値が実機と違えばビルドが落ちる。落ちたら、まず自分の理解が誤っていたことを疑う。
@@ -47,7 +56,12 @@ expected: { kind: "exception", type: "ClassCastException" } // 実行時にこ�
 - **`moduleSetup`**: 複数モジュールを構成して `--module-source-path` でコンパイル・実行する。
   「exports していないパッケージは他モジュールから見えない」のように、
   モジュールをまたいで初めて確認できる挙動はこれで検証する
-- **`runAsSourceFile`**: `javac` を介さず `java Foo.java` で実行する（SE 11 のソースファイルモード）
+- **`runAsSourceFile`**: `javac` を介さず `java Foo.java` で実行する（SE 11 以降のソースファイルモード）
+- **`moduleSetup.jars`**: module-info.java を持たない JAR を作り、モジュールパス（自動モジュール）かクラスパス（無名モジュール）に置く
+- **`moduleSetup.tool`**: 構成をビルドしたあと `jdeps` / `jar` / `java` コマンドを実行し、その出力を結果とする（jdeps の出力やコマンドラインオプションの裏取り）
+- **`resources`**: コードが読むファイル（リソース・バンドルの .properties、入力ファイルなど）を作業ディレクトリに置く。画面にもコードと並べて表示される
+- **`stdin`**: 標準入力に流し込む内容（コンソール入力の問題）
+- **`libraries: ["h2"]`**: JDBC の問題で H2 Database（インメモリ）のドライバをクラスパスに載せ、実際に SQL を実行する
 
 どうしても検証できない場合に限り `not-verifiable` を使い、`reason` に理由を必ず書く。
 「期待値を書くのが面倒」「検証が通らない」という理由で使ってはいけない。
@@ -65,21 +79,49 @@ moduleSetup: {
 },
 ```
 
+`code` を省略した `moduleSetup` の問題は、`jars` と `sources` のファイル一式がそのまま画面に表示される
+（表示しているコードと検証したコードを一致させるため）。
+
 **注意**: `moduleSetup` と `runAsSourceFile` による検証は「解説で主張している挙動が
 処理系と一致するか」の裏取りであり、**正解の選択肢と実行結果の一致は検証されない**
 （選択肢が文章による説明であり、実行結果と文字列比較できないため）。
 そのため、これらの問題では選択肢と解説の対応を人間が確認する必要がある。
+`npm run verify:java -- --show` で各問の実機の結果（コンパイルエラーや例外のメッセージ）を表示できるので、
+「期待どおりの種類の結果が、解説どおりの理由で起きているか」を必ず確かめる。
 
 ## 出題範囲
 
-[src/quizTypes.ts](src/quizTypes.ts) の `ExamTopic` が出題範囲の 11 分野に対応している。
+範囲外の内容で問題を作らないこと。出題範囲を広げる場合は、根拠（公式の試験トピック）を確認してから。
 
-- **Stream API は Silver の範囲外**（Gold / 1Z0-816 の範囲）。出題しない
+### Silver SE 11
+
+[src/quizTypes.ts](src/quizTypes.ts) の `SilverTopic` が出題範囲の 11 分野に対応している。
+
+- **Stream API は Silver の範囲外**（Gold の範囲）。Silver では出題しない
 - ラムダ式・関数型インタフェースは Silver の範囲内（基礎レベル）
 - モジュールシステムは範囲内
 - SE 11 の言語機能（`var`、`String.repeat` / `strip` / `isBlank` など）は範囲内
 
-範囲外の内容で問題を作らないこと。出題範囲を広げる場合は、根拠（公式の試験トピック）を確認してから。
+### Gold SE 17
+
+`GoldTopic` は Oracle 公式の「試験内容チェックリスト」（Java SE 17 Programmer II / 1Z0-826-JPN）の 8 分野に対応している。
+
+- コレクションとジェネリクス / 関数型インタフェースとラムダ式（内部クラスを含む）/ Stream API /
+  モジュール・システム（jdeps、ServiceLoader を含む）/ 並列処理（Flow を含む）/ ファイル I/O / JDBC / ローカライズ
+- record や var などの Java 17 までの言語機能は、コードの中で使ってよい（それ自体を主題にするのは Silver SE 17 の範囲）
+- 例外処理そのもの、日付・時刻 API の計算はチェックリストに無いので主題にしない（ローカライズでの日付の書式は範囲内）
+
+Gold で気を付けること:
+
+- **実行のたびに結果が変わるコードは出題しない**。並列処理の問題はスレッドの完了を `join` / `Future.get` などで必ず待ち、
+  出力順が実行順序に依存しない形にする（検証は 1 回しか実行しないので、偶然通ることがある）
+- **Path を文字列として出力しない**。区切り文字が OS で異なり、手元（Windows）と CI（Linux）で結果が変わる。名前要素の単位で扱う
+- ファイルを読み書きする問題は相対パスで書く。検証時のカレントディレクトリは問題ごとの作業ディレクトリ
+- **検証時の既定ロケールは ja_JP、タイムゾーンは Asia/Tokyo に固定している**（`RUNTIME_PROPS`）。
+  既定ロケールに依存する問題では、問題文に「デフォルトロケールは ja_JP とする」と明記する
+- JDBC は H2 で検証するが、**JDBC の仕様として定まっている振る舞いだけを出題する**。
+  H2 は仕様より寛容な箇所がある（自動コミット中の `rollback()` が例外にならない、前方専用の ResultSet で `absolute()` が動くなど）ので、そうした挙動は問わない。
+  例外はベンダー固有のサブクラスになるため、`catch (SQLException e)` で受けて出力する形にする
 
 ## 問題の作り方
 
@@ -120,30 +162,35 @@ moduleSetup: {
 ## 検証
 
 ```bash
-npm run verify:java   # 全問を JDK 11 でコンパイル・実行して検証（必須・build 組み込み）
-npm run build         # tsc → verify:java → vite build
+npm run verify:java                        # 全問を試験区分ごとの JDK でコンパイル・実行して検証（必須・build 組み込み）
+npm run verify:java -- --exam gold17       # 1 つの試験区分だけ検証する（問題作成中の確認用）
+npm run verify:java -- --exam gold17 --show  # 各問の実機の結果も表示する
+npm run build                              # tsc → verify:java → vite build
 ```
 
-検証スクリプトは JDK 11 を自動検出する（`JAVA11_HOME` でも指定可）。
-**JDK 8 や 17 ではなく 11 を使う。** SE 11 の仕様で正解が決まるため。
+検証スクリプトは JDK 11 と JDK 17 を自動検出する（`JAVA11_HOME` / `JAVA17_HOME`、CI では setup-java の `JAVA_HOME_11_X64` / `JAVA_HOME_17_X64` でも指定可）。
+**Silver は 11、Gold は 17 で検証する。別のバージョンで代用しない。** 試験区分の Java のバージョンの仕様で正解が決まるため
+（検出時に `java -version` を読んで確かめている）。
+
+JDBC の問題で使う H2 のドライバは、初回の検証時に Maven Central から取得し、SHA-1 を照合して `.java-lib/` に置く（Git 管理外）。
 
 ### デプロイのビルドは検証を含まない
 
 Cloudflare Workers Builds（Git push 連携の自動デプロイ）のビルドイメージには
 Go / Node.js / Python / Ruby はあるが **Java が無い**。そのため `wrangler.jsonc`
-の `build.command` は `npm run build`（JDK 11 実機検証込み）ではなく、
+の `build.command` は `npm run build`（JDK 実機検証込み）ではなく、
 `npm run build:deploy`（`tsc && vite build` のみ）を使っている。
 JDK 前提のコマンドをそこに置くと自動デプロイが必ず失敗する。
 
 問題データの実機検証は手元の `npm run build` と、push/PR ごとに走る
-[.github/workflows/verify.yml](.github/workflows/verify.yml)（JDK 11 セットアップ込み）で担保している。
+[.github/workflows/verify.yml](.github/workflows/verify.yml)（JDK 11 / 17 セットアップ込み）で担保している。
 **`build.command` を安易に `npm run build` へ戻さないこと。**
 
 ### 検証で落ちる項目
 
-- `expected-mismatch`: 期待した結果と実機の結果が違う（出力・コンパイルエラーの行・例外の型）
+- `expected-mismatch`: 期待した結果と実機の結果が違う（出力・コンパイルエラーの行・例外の型・例外までの出力）
 - `choice-mismatch`: 正解として指定した選択肢が期待結果と噛み合っていない
-- `unique-id` / `correct` / `choices` / `class-name`: 問題データの構造的な誤り
+- `unique-id` / `variant-of` / `correct` / `choices` / `class-name`: 問題データの構造的な誤り
 
 `choice-mismatch` は実行結果を問う問題にだけ適用される。
 `moduleSetup` / `runAsSourceFile` の問題は対象外（上記の注意を参照）。
@@ -158,3 +205,8 @@ JDK 前提のコマンドをそこに置くと自動デプロイが必ず失敗�
   - `variants.ts` / `variants2.ts`: 既存論点の亜種（id 101-137）
   - `extra1.ts`: 論点を増やすための追加問題（id 201-）
   - `index.ts`: Silver 全問題の集約
+- Gold の問題ファイル（[src/gold/](src/gold/)）は分野ごとに 1 ファイルで、id は分野ごとに 100 ずつ区切る:
+  - `collections.ts`（10101-）/ `functional.ts`（10201-）/ `streams.ts`（10301-）/ `modules.ts`（10401-）
+  - `concurrency.ts`（10501-）/ `io.ts`（10601-）/ `jdbc.ts`（10701-）/ `localization.ts`（10801-）
+  - `index.ts`: Gold 全問題の集約
+  - 論点キーは `gold-<分野>-<論点>` の形にする（Silver のキーと衝突させない）

@@ -1,16 +1,14 @@
 import "./style.css";
 import { computeBraceDepths, highlightJava } from "./javaHighlight";
-import { questions, TOPIC_META, type ExamTopic, type SilverQuestion } from "./questions";
-
-/** 本試験（1Z0-815-JPN）の形式に合わせた設定 */
-const EXAM = {
-  /** 本試験の出題数 */
-  questionCount: 80,
-  /** 本試験の制限時間（分） */
-  minutes: 180,
-  /** 合格ライン */
-  passingRate: 0.63,
-};
+import {
+  EXAM_IDS,
+  EXAMS,
+  questions,
+  topicMeta,
+  type ExamId,
+  type ExamTopic,
+  type Question,
+} from "./questions";
 
 type Screen = "start" | "quiz" | "result" | "list";
 type Mode = "practice" | "exam";
@@ -20,9 +18,11 @@ type ListMode = "search" | "bookmarks" | "mistakes";
 interface AppState {
   screen: Screen;
   mode: Mode;
+  /** 選んでいる試験区分。分野・検索・ブックマーク一覧などはこの試験区分の問題だけを対象にする */
+  exam: ExamId;
   /** 練習モードで選んでいる分野。"all" は全分野 */
   topic: ExamTopic | "all";
-  quizQuestions: SilverQuestion[];
+  quizQuestions: Question[];
   currentIndex: number;
   /** 各問で選んだ選択肢のインデックス */
   selections: number[][];
@@ -38,7 +38,7 @@ interface AppState {
   /** 検索欄に残す直前の入力（トップに戻ったときに保持する） */
   searchQuery: string;
   /** 問題一覧画面に表示している問題（検索結果 or ブックマーク） */
-  listQuestions: SilverQuestion[];
+  listQuestions: Question[];
   listMode: ListMode;
   /**
    * quiz 画面の「中断」で戻る先。検索結果やブックマークから開いた問題は
@@ -47,9 +47,19 @@ interface AppState {
   quizReturnScreen: "start" | "list";
 }
 
+// localStorage のキー。下の state の初期化で読み込むため、state より前に宣言しておく
+// （後ろに置くと初期化前の const を参照して ReferenceError になり、読み込みが常に失敗する）
+/** 選んだ試験区分を保存するキー */
+const EXAM_KEY = "java-cert-quiz-exam";
+/** ブックマークした問題 id を保存するキー */
+const BOOKMARK_KEY = "java-cert-quiz-bookmarks";
+/** 間違えた問題 id を保存するキー */
+const WRONG_ANSWERS_KEY = "java-cert-quiz-wrong-answers";
+
 const state: AppState = {
   screen: "start",
   mode: "practice",
+  exam: loadExam(),
   topic: "all",
   quizQuestions: [],
   currentIndex: 0,
@@ -67,7 +77,24 @@ const state: AppState = {
 
 const app = document.getElementById("app")!;
 
-const TOPICS = Object.keys(TOPIC_META) as ExamTopic[];
+/** 選んでいる試験区分の設定（出題数・制限時間・合格ライン・分野） */
+function currentExam() {
+  return EXAMS[state.exam];
+}
+
+/** 選んでいる試験区分の分野（表示順） */
+function currentTopics(): ExamTopic[] {
+  return Object.keys(currentExam().topics) as ExamTopic[];
+}
+
+/** 選んでいる試験区分の問題 */
+function examQuestions(): Question[] {
+  return questions.filter((q) => q.exam === state.exam);
+}
+
+function topicLabel(question: Question): string {
+  return topicMeta(question.exam, question.topic).label;
+}
 
 function escapeHtml(text: string): string {
   return text
@@ -86,8 +113,22 @@ function shuffle<T>(array: T[]): T[] {
   return copy;
 }
 
-/** ブックマークした問題 id を保存するキー */
-const BOOKMARK_KEY = "java-cert-quiz-bookmarks";
+function loadExam(): ExamId {
+  try {
+    const raw = localStorage.getItem(EXAM_KEY);
+    return EXAM_IDS.includes(raw as ExamId) ? (raw as ExamId) : "silver11";
+  } catch {
+    return "silver11";
+  }
+}
+
+function saveExam(exam: ExamId): void {
+  try {
+    localStorage.setItem(EXAM_KEY, exam);
+  } catch {
+    // プライベートモードや容量超過は無視する（試験区分の選択自体は続けられる）
+  }
+}
 
 function loadBookmarks(): Set<number> {
   try {
@@ -106,9 +147,6 @@ function saveBookmarks(bookmarks: Set<number>): void {
     // プライベートモードや容量超過は無視する（ブックマーク自体は続けられる）
   }
 }
-
-/** 間違えた問題 id を保存するキー */
-const WRONG_ANSWERS_KEY = "java-cert-quiz-wrong-answers";
 
 function loadWrongAnswers(): Set<number> {
   try {
@@ -155,16 +193,18 @@ function toggleBookmark(id: number): void {
  * 「equals」「instanceof」のような技術用語でも、日本語の説明文でも引っかかるようにするため、
  * 問題を構成するほぼすべてのテキストを対象にしている。
  */
-function matchQuestion(question: SilverQuestion, query: string): boolean {
+function matchQuestion(question: Question, query: string): boolean {
   const needle = query.trim().toLowerCase();
   if (!needle) return false;
 
   const haystack = [
     question.question,
     question.explanation,
-    TOPIC_META[question.topic].label,
+    topicLabel(question),
     ...question.choices,
     ...(question.code ?? []),
+    ...(question.resources ?? []).flatMap((r) => r.content),
+    ...(question.moduleSetup?.sources ?? []).flatMap((s) => s.content),
   ]
     .join("\n")
     .toLowerCase();
@@ -198,9 +238,9 @@ function saveLastVariants(map: Record<string, number>): void {
  * その際、前回出題した亜種は候補から外すため、続けて解いても同じ問題は出てこない。
  * 亜種を一巡したら、また全体から選び直す。
  */
-function pickOnePerConcept(pool: SilverQuestion[]): SilverQuestion[] {
-  const groups = new Map<string, SilverQuestion[]>();
-  const picked: SilverQuestion[] = [];
+function pickOnePerConcept(pool: Question[]): Question[] {
+  const groups = new Map<string, Question[]>();
+  const picked: Question[] = [];
 
   for (const question of pool) {
     if (!question.variantOf) {
@@ -231,15 +271,15 @@ function pickOnePerConcept(pool: SilverQuestion[]): SilverQuestion[] {
  * 残りが多い分野から順に、直前と違う分野を選んで詰めていく。
  * 単一分野の練習など、分散しようがない場合はそのまま並べる。
  */
-function spreadByTopic(items: SilverQuestion[]): SilverQuestion[] {
-  const buckets = new Map<ExamTopic, SilverQuestion[]>();
+function spreadByTopic(items: Question[]): Question[] {
+  const buckets = new Map<ExamTopic, Question[]>();
   for (const question of items) {
     const list = buckets.get(question.topic) ?? [];
     list.push(question);
     buckets.set(question.topic, list);
   }
 
-  const result: SilverQuestion[] = [];
+  const result: Question[] = [];
   let lastTopic: ExamTopic | null = null;
 
   while (result.length < items.length) {
@@ -277,7 +317,7 @@ function spreadByTopic(items: SilverQuestion[]): SilverQuestion[] {
  * 選択肢の並びをシャッフルし、正解のインデックスも追随させる。
  * 同じ問題を繰り返し解いたときに「正解の位置」で覚えてしまうのを防ぐ。
  */
-function shuffleChoices(question: SilverQuestion): SilverQuestion {
+function shuffleChoices(question: Question): Question {
   const order = shuffle(question.choices.map((_, i) => i));
   return {
     ...question,
@@ -286,12 +326,13 @@ function shuffleChoices(question: SilverQuestion): SilverQuestion {
   };
 }
 
-function questionsByTopic(topic: ExamTopic | "all"): SilverQuestion[] {
-  return topic === "all" ? questions : questions.filter((q) => q.topic === topic);
+function questionsByTopic(topic: ExamTopic | "all"): Question[] {
+  const pool = examQuestions();
+  return topic === "all" ? pool : pool.filter((q) => q.topic === topic);
 }
 
 /** 正解判定。複数選択は本試験と同様に完全一致のみ正解（部分点なし） */
-function isCorrect(question: SilverQuestion, selected: number[]): boolean {
+function isCorrect(question: Question, selected: number[]): boolean {
   if (selected.length !== question.correct.length) return false;
   const want = new Set(question.correct);
   return selected.every((i) => want.has(i));
@@ -346,10 +387,29 @@ function scrollToTop(): void {
 // ------------------------------------------------------------------ トップ画面
 
 function renderStart(): void {
-  const total = questions.length;
+  const exam = currentExam();
+  const total = examQuestions().length;
 
-  const topicCards = TOPICS.map((topic, index) => {
-    const meta = TOPIC_META[topic];
+  const examCards = EXAM_IDS.map((id) => {
+    const meta = EXAMS[id];
+    const count = questions.filter((q) => q.exam === id).length;
+    const selected = state.exam === id;
+    return `
+      <button
+        type="button"
+        class="exam-card ${selected ? "selected" : ""}"
+        data-exam="${id}"
+        aria-pressed="${selected}"
+      >
+        <span class="exam-card-name">${escapeHtml(meta.name)}</span>
+        <span class="exam-card-code">${escapeHtml(meta.code)} / JDK ${meta.jdk}</span>
+        <span class="exam-card-count">${count} Q</span>
+      </button>
+    `;
+  }).join("");
+
+  const topicCards = currentTopics().map((topic, index) => {
+    const meta = topicMeta(state.exam, topic);
     const count = questionsByTopic(topic).length;
     const selected = state.topic === topic;
     const num = String(index + 1).padStart(2, "0");
@@ -373,17 +433,25 @@ function renderStart(): void {
 
   const allSelected = state.topic === "all";
   const selectedTopicLabel =
-    state.topic === "all" ? "全分野" : TOPIC_META[state.topic].label;
+    state.topic === "all" ? "全分野" : topicMeta(state.exam, state.topic).label;
 
   app.innerHTML = `
     <main class="container start-page">
       <header class="hero">
-        <h1 class="hero-title">Java<br />Silver SE 11<br />対策クイズ</h1>
+        <h1 class="hero-title">Java<br />${escapeHtml(exam.name)}<br />対策クイズ</h1>
         <p class="lead">
-          Oracle Certified Java Programmer, Silver SE 11（1Z0-815-JPN）の出題範囲に沿った練習問題です。
-          コードを伴う問題はすべて JDK 11 で実際にコンパイル・実行し、正解を検証しています。
+          Oracle Certified Java Programmer, ${escapeHtml(exam.name)}（${escapeHtml(exam.code)}）の出題範囲に沿った練習問題です。
+          コードを伴う問題はすべて JDK ${exam.jdk} で実際にコンパイル・実行し、正解を検証しています。
         </p>
       </header>
+
+      <section class="card exam-section">
+        <p class="section-label">(Exam)</p>
+        <h2>試験区分を選択</h2>
+        <div class="exam-grid" role="group" aria-label="試験区分">
+          ${examCards}
+        </div>
+      </section>
 
       <section class="card difficulty-section">
         <p class="section-label">(Mode)</p>
@@ -413,7 +481,7 @@ function renderStart(): void {
           </p>
           <div class="start-actions">
             <button class="btn btn-primary btn-large" id="practice-btn" type="button">練習モードで始める</button>
-            <button class="btn btn-ghost" id="exam-btn" type="button">模擬試験モード（${EXAM.minutes}分）</button>
+            <button class="btn btn-ghost" id="exam-btn" type="button">模擬試験モード（${exam.minutes}分）</button>
           </div>
         </div>
       </div>
@@ -432,25 +500,37 @@ function renderStart(): void {
           <button type="submit" class="btn btn-ghost">検索</button>
         </form>
         <button type="button" class="btn-link bookmarks-link" id="bookmarks-btn">
-          ブックマーク一覧を見る（${state.bookmarks.size} 件）
+          ブックマーク一覧を見る（${examQuestions().filter((q) => state.bookmarks.has(q.id)).length} 件）
         </button>
         <button type="button" class="btn-link bookmarks-link" id="mistakes-btn">
-          間違えた問題を見る（${state.wrongAnswers.size} 件）
+          間違えた問題を見る（${examQuestions().filter((q) => state.wrongAnswers.has(q.id)).length} 件）
         </button>
       </section>
 
       <section class="card info-card">
         <p class="section-label">(Exam format)</p>
-        <h2>本試験の形式</h2>
+        <h2>本試験の形式（${escapeHtml(exam.code)}）</h2>
         <ol>
-          <li data-index="01">出題数 ${EXAM.questionCount} 問 / 制限時間 ${EXAM.minutes} 分</li>
-          <li data-index="02">合格ライン ${Math.round(EXAM.passingRate * 100)}%</li>
+          <li data-index="01">出題数 ${exam.questionCount} 問 / 制限時間 ${exam.minutes} 分</li>
+          <li data-index="02">合格ライン ${Math.round(exam.passingRate * 100)}%</li>
           <li data-index="03">複数選択問題は「2つ選びなさい」のように選ぶ数が示されます</li>
           <li data-index="04">複数選択は部分点なし。すべて正しく選んで初めて正解です</li>
         </ol>
       </section>
     </main>
   `;
+
+  document.querySelectorAll("[data-exam]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const id = el.getAttribute("data-exam") as ExamId;
+      if (id === state.exam) return;
+      state.exam = id;
+      // 分野は試験区分ごとに別物なので、切り替えたら全分野に戻す
+      state.topic = "all";
+      saveExam(id);
+      renderStart();
+    });
+  });
 
   document.querySelectorAll("[data-topic]").forEach((el) => {
     el.addEventListener("click", () => {
@@ -469,27 +549,27 @@ function renderStart(): void {
     if (!query) return;
     state.searchQuery = query;
     openList(
-      questions.filter((q) => matchQuestion(q, query)),
+      examQuestions().filter((q) => matchQuestion(q, query)),
       "search",
     );
   });
 
   document.getElementById("bookmarks-btn")!.addEventListener("click", () => {
     openList(
-      questions.filter((q) => state.bookmarks.has(q.id)),
+      examQuestions().filter((q) => state.bookmarks.has(q.id)),
       "bookmarks",
     );
   });
 
   document.getElementById("mistakes-btn")!.addEventListener("click", () => {
     openList(
-      questions.filter((q) => state.wrongAnswers.has(q.id)),
+      examQuestions().filter((q) => state.wrongAnswers.has(q.id)),
       "mistakes",
     );
   });
 }
 
-function openList(results: SilverQuestion[], mode: ListMode): void {
+function openList(results: Question[], mode: ListMode): void {
   state.listQuestions = results;
   state.listMode = mode;
   state.screen = "list";
@@ -539,7 +619,7 @@ function renderList(): void {
         `;
       return `
         <div class="list-item">
-          <span class="list-item-no">${escapeHtml(TOPIC_META[question.topic].label)}</span>
+          <span class="list-item-no">${escapeHtml(topicLabel(question))}</span>
           <button type="button" class="list-item-open" data-open-index="${index}">
             <span class="list-item-title">${escapeHtml(question.question.slice(0, 60))}</span>
           </button>
@@ -620,32 +700,62 @@ function openQuestionFromList(index: number): void {
 
 // -------------------------------------------------------------------- 出題画面
 
-function renderCode(question: SilverQuestion): string {
-  if (!question.code) return "";
-
-  const depths = computeBraceDepths(question.code);
-  const lines = question.code
+/** 1 ファイル分のコードブロック。Java 以外（プロパティファイルや入力ファイル）はハイライトしない */
+function renderCodeBlock(fileName: string, content: string[]): string {
+  const isJava = fileName.endsWith(".java");
+  const depths = computeBraceDepths(content);
+  const lines = content
     .map((line, index) => {
       const lineNo = index + 1;
+      const html = isJava ? highlightJava(line, lineNo, null, null, depths[index]) : escapeHtml(line);
       return `
         <div class="code-line" data-line="${lineNo}">
           <span class="line-no">${lineNo}</span>
-          <code class="line-code">${highlightJava(line, lineNo, null, null, depths[index]) || "&nbsp;"}</code>
+          <code class="line-code">${html || "&nbsp;"}</code>
         </div>
       `;
     })
     .join("");
 
   return `
-    <div class="code-block" role="group" aria-label="Java コード">
+    <div class="code-block" role="group" aria-label="${escapeHtml(fileName)}">
       <div class="code-toolbar">
-        <span class="filename">${question.className ? `${escapeHtml(question.className)}.java` : "module-info.java"}</span>
+        <span class="filename">${escapeHtml(fileName)}</span>
       </div>
       <div class="code-scroll">
         <div class="code-lines">${lines}</div>
       </div>
     </div>
   `;
+}
+
+/**
+ * 問題が提示するファイル一式を表示する。
+ * code が無いモジュール構成の問題では、検証に使うソース一式をそのまま見せる
+ * （表示しているコードと実機で検証したコードを一致させるため）。
+ */
+function renderCode(question: Question): string {
+  const blocks: string[] = [];
+
+  if (question.code) {
+    const fileName = question.className ? `${question.className}.java` : "module-info.java";
+    blocks.push(renderCodeBlock(fileName, question.code));
+  } else if (question.moduleSetup) {
+    for (const jar of question.moduleSetup.jars ?? []) {
+      for (const file of jar.sources) {
+        blocks.push(renderCodeBlock(`${jar.fileName} : ${file.path}`, file.content));
+      }
+    }
+    for (const file of question.moduleSetup.sources) {
+      blocks.push(renderCodeBlock(`${file.module}/${file.path}`, file.content));
+    }
+  }
+
+  for (const resource of question.resources ?? []) {
+    blocks.push(renderCodeBlock(resource.path, resource.content));
+  }
+
+  return blocks.join("");
 }
 
 function renderQuiz(): void {
@@ -702,7 +812,7 @@ function renderQuiz(): void {
   const timerHtml =
     state.mode === "exam" && state.timerId !== null
       ? `<span id="exam-timer" class="exam-timer">${formatTime(state.remainingSec)}</span>`
-      : `<span>${escapeHtml(TOPIC_META[question.topic].label)}</span>`;
+      : `<span>${escapeHtml(topicLabel(question))}</span>`;
 
   const isLast = state.currentIndex === total - 1;
   const isListSession = state.quizReturnScreen === "list";
@@ -839,22 +949,24 @@ function renderResult(): void {
   const correctCount = score();
   const rate = total === 0 ? 0 : correctCount / total;
   const percentage = Math.round(rate * 100);
-  const passed = rate >= EXAM.passingRate;
+  const exam = currentExam();
+  const passed = rate >= exam.passingRate;
 
   // 分野別の正答状況
-  const byTopic = new Map<ExamTopic, { correct: number; total: number }>();
+  const byTopic = new Map<string, { correct: number; total: number }>();
   state.quizQuestions.forEach((q, i) => {
-    const entry = byTopic.get(q.topic) ?? { correct: 0, total: 0 };
+    const label = topicLabel(q);
+    const entry = byTopic.get(label) ?? { correct: 0, total: 0 };
     entry.total += 1;
     if (isCorrect(q, state.selections[i] ?? [])) entry.correct += 1;
-    byTopic.set(q.topic, entry);
+    byTopic.set(label, entry);
   });
 
   const topicRows = [...byTopic.entries()]
     .map(
-      ([topic, r]) => `
+      ([label, r]) => `
         <div class="topic-row">
-          <span class="topic-row-label">${escapeHtml(TOPIC_META[topic].label)}</span>
+          <span class="topic-row-label">${escapeHtml(label)}</span>
           <span class="topic-row-score ${r.correct === r.total ? "full" : ""}">${r.correct} / ${r.total}</span>
         </div>
       `,
@@ -868,7 +980,7 @@ function renderResult(): void {
         <button type="button" class="question-list-item" data-review="${i}">
           <span class="question-list-no">${String(i + 1).padStart(2, "0")}</span>
           <span class="question-list-main">
-            <span class="question-list-title">${escapeHtml(TOPIC_META[q.topic].label)}</span>
+            <span class="question-list-title">${escapeHtml(topicLabel(q))}</span>
             <span class="question-list-pattern">${escapeHtml(q.question.slice(0, 40))}…</span>
           </span>
           <span class="question-list-status ${ok ? "correct" : "wrong"}">${ok ? "正解" : "不正解"}</span>
@@ -887,7 +999,7 @@ function renderResult(): void {
         ${
           state.mode === "exam"
             ? `<p class="result-message ${passed ? "passed" : "failed"}">
-                 ${passed ? "合格ラインに到達しています" : `不合格（合格ラインは ${Math.round(EXAM.passingRate * 100)}%）`}
+                 ${passed ? "合格ラインに到達しています" : `不合格（合格ラインは ${Math.round(exam.passingRate * 100)}%）`}
                </p>`
             : ""
         }
@@ -930,12 +1042,13 @@ function renderResult(): void {
 // ------------------------------------------------------------------------ 起動
 
 function startQuiz(mode: Mode): void {
-  const pool = mode === "exam" ? questions : questionsByTopic(state.topic);
+  const exam = currentExam();
+  const pool = mode === "exam" ? examQuestions() : questionsByTopic(state.topic);
   // 論点ごとに亜種を1問だけ選び、シャッフルしてから同じ分野が並ばないように配置する
   const perConcept = pickOnePerConcept(pool);
   const limited = shuffle(perConcept).slice(
     0,
-    mode === "exam" ? EXAM.questionCount : perConcept.length,
+    mode === "exam" ? exam.questionCount : perConcept.length,
   );
   const picked = spreadByTopic(limited).map(shuffleChoices);
 
@@ -949,7 +1062,7 @@ function startQuiz(mode: Mode): void {
 
   if (mode === "exam") {
     // 問題数が本試験より少ない場合は、1問あたりの持ち時間に合わせて短縮する
-    const perQuestionSec = (EXAM.minutes * 60) / EXAM.questionCount;
+    const perQuestionSec = (exam.minutes * 60) / exam.questionCount;
     state.remainingSec = Math.round(perQuestionSec * picked.length);
     startTimer();
   } else {

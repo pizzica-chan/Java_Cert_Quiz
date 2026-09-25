@@ -1,9 +1,15 @@
 /**
+ * 収録している試験区分。
+ * 試験区分ごとに Java のバージョン（＝検証に使う JDK）と出題範囲が異なる。
+ */
+export type ExamId = "silver11" | "gold17";
+
+/**
  * 出題範囲（Oracle Certified Java Programmer, Silver SE 11 / 1Z0-815-JPN）。
  * 公式の試験トピックおよび定番対策書の章立てに対応させている。
- * Stream API は Silver の範囲外（Gold / 1Z0-816 側）なので含めない。
+ * Stream API は Silver の範囲外（Gold 側）なので含めない。
  */
-export type ExamTopic =
+export type SilverTopic =
   | "basics" // 簡単な Java プログラムの作成（main、パッケージ、import、実行）
   | "datatypes" // 基本データ型と文字列操作（型変換、String、StringBuilder）
   | "operators" // 演算子と判定構造（優先順位、if / switch）
@@ -16,7 +22,29 @@ export type ExamTopic =
   | "exceptions" // 例外処理（try-catch-finally、検査例外、try-with-resources）
   | "modules"; // モジュールシステム（module-info.java、requires / exports）
 
-export const TOPIC_META: Record<ExamTopic, { label: string; description: string }> = {
+/**
+ * 出題範囲（Oracle Certified Java Programmer, Gold SE 17 / 1Z0-826-JPN）。
+ * Oracle 公式の「試験内容チェックリスト」の 8 分野に対応させている。
+ */
+export type GoldTopic =
+  | "collections" // コレクションとジェネリクス（オートボクシング、List / Set / Map / Deque、総称型、Comparator）
+  | "functional" // 関数型インタフェースとラムダ式（内部クラス、ラムダ式、メソッド参照、java.util.function）
+  | "streams" // Java ストリーム API（中間操作、リダクション、Collectors、Optional、並列ストリーム）
+  | "modules" // Java モジュール・システム（宣言とアクセス、無名・自動モジュール、jdeps、ServiceLoader）
+  | "concurrency" // 並列処理（Thread、ExecutorService、synchronized、並行コレクション、Flow）
+  | "io" // ファイル I/O（コンソール、I/O ストリーム、シリアライズ、Path / Files、Files のストリーム）
+  | "jdbc" // JDBC（DriverManager / DataSource、Statement / PreparedStatement、CallableStatement）
+  | "localization"; // ローカライズ（Locale、リソース・バンドル、メッセージ・日付・数値のフォーマット）
+
+/** 全試験区分の分野。キーは試験区分をまたいで重複しうる（例: "modules"）ので、表示名は試験区分ごとに引く */
+export type ExamTopic = SilverTopic | GoldTopic;
+
+export interface TopicMeta {
+  label: string;
+  description: string;
+}
+
+export const SILVER_TOPIC_META: Record<SilverTopic, TopicMeta> = {
   basics: { label: "Java プログラムの基本", description: "main メソッド、パッケージ、import、実行の流れ" },
   datatypes: { label: "データ型と文字列", description: "プリミティブ型、型変換、String / StringBuilder" },
   operators: { label: "演算子と判定構造", description: "演算子の優先順位、if 文、switch 文" },
@@ -30,18 +58,83 @@ export const TOPIC_META: Record<ExamTopic, { label: string; description: string 
   modules: { label: "モジュールシステム", description: "module-info.java、requires / exports、実行方法" },
 };
 
+export const GOLD_TOPIC_META: Record<GoldTopic, TopicMeta> = {
+  collections: { label: "コレクションとジェネリクス", description: "List / Set / Map / Deque、総称型、Comparator、オートボクシング" },
+  functional: { label: "関数型インタフェースとラムダ式", description: "内部クラス、ラムダ式、メソッド参照、java.util.function" },
+  streams: { label: "Stream API", description: "中間操作、リダクション、Collectors、Optional、並列ストリーム" },
+  modules: { label: "モジュール・システム", description: "モジュール間のアクセス、無名・自動モジュール、ServiceLoader" },
+  concurrency: { label: "並列処理", description: "Thread、ExecutorService、synchronized、並行コレクション、Flow" },
+  io: { label: "ファイル I/O", description: "コンソール、I/O ストリーム、シリアライズ、Path / Files" },
+  jdbc: { label: "JDBC", description: "DriverManager、Statement / PreparedStatement、CallableStatement" },
+  localization: { label: "ローカライズ", description: "Locale、リソース・バンドル、メッセージ・日付・数値のフォーマット" },
+};
+
+export interface ExamMeta<T extends ExamTopic = ExamTopic> {
+  id: ExamId;
+  /** 画面に出す短い名前（例: "Silver SE 11"） */
+  name: string;
+  /** 試験番号（例: "1Z0-815-JPN"） */
+  code: string;
+  /** 正解の裏取りに使う JDK のメジャーバージョン */
+  jdk: number;
+  /** 本試験の出題数 */
+  questionCount: number;
+  /** 本試験の制限時間（分） */
+  minutes: number;
+  /** 合格ライン */
+  passingRate: number;
+  /** 分野（表示順） */
+  topics: Record<T, TopicMeta>;
+}
+
+/** 試験区分ごとの設定。本試験の形式（出題数・時間・合格ライン）は Oracle 公式の試験詳細に合わせる */
+export const EXAMS: { silver11: ExamMeta<SilverTopic>; gold17: ExamMeta<GoldTopic> } = {
+  silver11: {
+    id: "silver11",
+    name: "Silver SE 11",
+    code: "1Z0-815-JPN",
+    jdk: 11,
+    questionCount: 80,
+    minutes: 180,
+    passingRate: 0.63,
+    topics: SILVER_TOPIC_META,
+  },
+  gold17: {
+    id: "gold17",
+    name: "Gold SE 17",
+    code: "1Z0-826-JPN",
+    jdk: 17,
+    questionCount: 60,
+    minutes: 90,
+    passingRate: 0.65,
+    topics: GOLD_TOPIC_META,
+  },
+};
+
+export const EXAM_IDS = Object.keys(EXAMS) as ExamId[];
+
+/** 試験区分の中での分野の表示情報を引く */
+export function topicMeta(exam: ExamId, topic: ExamTopic): TopicMeta {
+  const topics = EXAMS[exam].topics as Partial<Record<ExamTopic, TopicMeta>>;
+  return topics[topic] ?? { label: topic, description: "" };
+}
+
 /**
  * 提示コードを実際に javac / java にかけたときに得られるべき結果。
  * これを指定した問題は、ビルド時に `npm run verify:java` が
- * 本物の JDK 11 の出力と突き合わせて検証する（正解の裏取り）。
+ * 試験区分に対応する本物の JDK（Silver SE 11 なら 11、Gold SE 17 なら 17）の出力と突き合わせて検証する（正解の裏取り）。
  */
 export type ExpectedResult =
   /** 正常にコンパイル・実行され、標準出力が stdout と一致する */
   | { kind: "output"; stdout: string }
   /** コンパイルエラーになる。line を指定するとその行で出ることも確認する */
   | { kind: "compile-error"; line?: number }
-  /** コンパイルは通るが、実行時に例外で終了する（type は例外の完全修飾名またはクラス名） */
-  | { kind: "exception"; type: string }
+  /**
+   * コンパイルは通るが、実行時に例外で終了する（type は例外の完全修飾名またはクラス名）。
+   * stdout を指定すると、例外で終了するまでに出力された内容も確認する
+   * （「〜と出力された後、例外がスローされる」という選択肢の裏取り）。
+   */
+  | { kind: "exception"; type: string; stdout?: string }
   /**
    * 単一ファイルの javac / java では検証できないもの（モジュール構成など）。
    * 正しさが人間のレビュー頼りになるため、reason に検証できない理由を必ず書く。
@@ -68,11 +161,41 @@ export interface ModuleSetup {
     path: string;
     content: string[];
   }>;
+  /**
+   * module-info.java を持たない従来型の JAR。先に通常の javac でコンパイルして JAR にまとめ、
+   * placement に応じてモジュールパス（＝自動モジュール）かクラスパス（＝無名モジュール）に置く。
+   * 「JAR ファイル名から自動モジュール名が決まる」「名前付きモジュールは無名モジュールを読めない」
+   * といった挙動を実機で確かめるために使う。
+   */
+  jars?: Array<{
+    /** JAR ファイル名（例: "legacy-util-1.0.jar"）。自動モジュール名の導出元になる */
+    fileName: string;
+    placement: "module-path" | "class-path";
+    sources: Array<{ path: string; content: string[] }>;
+  }>;
+  /**
+   * 構成をビルドしたあと、main の代わりに JDK のコマンド（jdeps / jar / java）を実行し、その標準出力を結果とする。
+   * jdeps の出力やコマンドラインオプションの振る舞いを実機で確かめるために使う。
+   * カレントディレクトリは構成のルートで、引数からは次の場所を相対パスで参照できる:
+   *   out/（モジュールのコンパイル結果、モジュールごとのディレクトリ）、
+   *   jars/module-path/・jars/class-path/（jars で作った JAR）
+   */
+  tool?: { command: "jdeps" | "jar" | "java"; args: string[] };
 }
 
-export interface SilverQuestion {
+/** 問題が前提とするコード以外のファイル（プロパティファイル、入力ファイルなど） */
+export interface ResourceFile {
+  /** カレントディレクトリからの相対パス（例: "Messages_ja.properties", "data.txt"） */
+  path: string;
+  content: string[];
+}
+
+/** 検証時に追加でクラスパスに載せるライブラリ（JDBC ドライバなど） */
+export type Library = "h2";
+
+export interface QuestionData<T extends ExamTopic> {
   id: number;
-  topic: ExamTopic;
+  topic: T;
   /**
    * 同じ論点の亜種をまとめるキー（例: "datatypes-compound-assign"）。
    * 同じキーを持つ問題は「同じ論点を別の切り口・別の値で問うたもの」とみなし、
@@ -103,11 +226,31 @@ export interface SilverQuestion {
   /**
    * モジュール構成での検証。指定すると `code` ではなくこちらを
    * --module-source-path でコンパイル・実行して expected と突き合わせる。
+   * `code` を省略した場合は、このソース一式をそのまま画面に表示する。
    */
   moduleSetup?: ModuleSetup;
   /**
-   * Java SE 11 のソースファイルモード（javac を介さず `java Foo.java` で実行）で
+   * Java のソースファイルモード（javac を介さず `java Foo.java` で実行）で
    * 検証する場合に true。`code` をそのまま java コマンドへ渡す。
    */
   runAsSourceFile?: boolean;
+  /**
+   * コードが読み書きするファイル。検証時はカレントディレクトリ（クラスパスも兼ねる）に置き、
+   * 画面にもコードと並べて表示する。リソース・バンドルや入力ファイルの前提を示すために使う。
+   */
+  resources?: ResourceFile[];
+  /** 実行時に標準入力へ流し込む内容（コンソール入力を扱う問題用） */
+  stdin?: string;
+  /** 検証時にクラスパスへ追加するライブラリ（JDBC の問題では "h2" を指定する） */
+  libraries?: Library[];
 }
+
+/** Silver SE 11 の問題データ */
+export type SilverQuestion = QuestionData<SilverTopic>;
+/** Gold SE 17 の問題データ */
+export type GoldQuestion = QuestionData<GoldTopic>;
+
+/** アプリが扱う問題。どの試験区分の問題かを exam で持つ（src/questions.ts で付与する） */
+export type Question =
+  | (SilverQuestion & { exam: "silver11" })
+  | (GoldQuestion & { exam: "gold17" });

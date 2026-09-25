@@ -2,7 +2,7 @@ name: 問題データの検証
 
 # Cloudflare Workers Builds は JDK を持たないため、デプロイ時のビルドは
 # tsc + vite build のみ（build:deploy）で JDK 実機検証を含めていない。
-# その代わりにこの CI が push / PR のたびに JDK 11 での実機検証を含めた
+# その代わりにこの CI が push / PR のたびに JDK 11 / 17 での実機検証を含めた
 # フルビルド（npm run build）を実行し、問題データの正しさを継続的に担保する。
 on:
   push:
@@ -20,10 +20,20 @@ jobs:
         with:
           node-version: 22
 
+      # Silver SE 11 は JDK 11、Gold SE 17 は JDK 17 で検証する。
+      # 複数指定すると JAVA_HOME_11_X64 / JAVA_HOME_17_X64 が設定され、検証スクリプトがそれを使う
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "11"
+          java-version: |
+            11
+            17
+
+      # JDBC の問題で使う H2 のドライバ（検証スクリプトが Maven Central から取得する）をキャッシュする
+      - uses: actions/cache@v4
+        with:
+          path: .java-lib
+          key: java-lib-${{ hashFiles('scripts/verify-java.mts') }}
 
       - run: npm ci
 
