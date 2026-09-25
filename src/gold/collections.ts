@@ -54,7 +54,7 @@ export const goldCollectionsQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "5" },
     explanation:
-      "set.add(i) では short の i が Short にボクシングされて追加されます。一方 i - 1 は算術演算で int に昇格するため、remove には Integer がボクシングされて渡されます。Set.remove の引数は Object 型なのでコンパイルは通りますが、Short と Integer は equals で等しくならず、1 つも削除されません。remove や contains が Object を受け取るのは総称型導入前との互換性のためで、型の違いがコンパイル時に検出されない落とし穴になっています。",
+      "set.add(i) では short の i が Short にボクシングされて追加されます。一方 i - 1 は算術演算で int に昇格するため、remove には Integer がボクシングされて渡されます。Set.remove の引数は Object 型なのでコンパイルは通りますが、Short と Integer は equals で等しくならず、1 つも削除されません。remove や contains は「equals で等しい要素を探す」だけの操作なので、要素の型に限定せず Object を受け取る設計になっており、その代わりに型の食い違いがコンパイル時に検出されない落とし穴があります。",
   },
   {
     id: 10103,
@@ -114,7 +114,7 @@ export const goldCollectionsQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "exception", type: "NullPointerException", stdout: "true false" },
     explanation:
-      "オートボクシングは Integer.valueOf を使い、-128〜127 の値はキャッシュ済みの同じインスタンスを返すため a == b は true になります。128 はキャッシュ範囲外なので別々のインスタンスとなり、参照の比較である c == d は false です。7行目の e == 0 は片方が int なので e がアンボクシングされ、null に対して intValue() が呼ばれて NullPointerException になります。ラッパー型どうしの == は値ではなく参照を比べるため、値の比較には equals を使うのが原則です。",
+      "オートボクシングは Integer.valueOf を使い、-128〜127 の値はキャッシュ済みの同じインスタンスを返すため a == b は true になります。128 は（既定の設定では）キャッシュ範囲外なので別々のインスタンスとなり、参照の比較である c == d は false です。7行目の e == 0 は片方が int なので e がアンボクシングされ、null に対して intValue() が呼ばれて NullPointerException になります。ラッパー型どうしの == は値ではなく参照を比べるため、値の比較には equals を使うのが原則です。",
   },
 
   // ------------------------------------------------------------ Set と Comparator
@@ -232,7 +232,7 @@ export const goldCollectionsQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "exception", type: "NoSuchElementException", stdout: "x null" },
     explanation:
-      "Deque の取り出し・参照メソッドは、空のときの振る舞いで 2 系統に分かれます。poll / peek / offer 系は失敗を戻り値（null や false）で知らせ、pop / remove / element / add 系は例外で知らせます。1 件だけの \"x\" を poll で取り出したあと、peek は null を返し、pop は空の Deque に対して NoSuchElementException をスローします。null を失敗の合図に使う設計のため、ArrayDeque には null 要素そのものを追加できない（NullPointerException になる）点も合わせて押さえておきます。",
+      "Deque のメソッドは、操作できないときの知らせ方で 2 系統に分かれます。offer / poll / peek 系は戻り値（false や null）で知らせ、add / remove / element / pop 系は例外で知らせます。1 件だけの \"x\" を poll で取り出したあと、peek は null を返し、pop は空の Deque に対して NoSuchElementException をスローします。null を失敗の合図に使う設計のため、ArrayDeque には null 要素そのものを追加できない（NullPointerException になる）点も合わせて押さえておきます。",
   },
 
   // ---------------------------------------------------------------- Map の操作
@@ -389,7 +389,7 @@ export const goldCollectionsQuestions: GoldQuestion[] = [
     id: 10114,
     topic: "collections",
     variantOf: "gold-collections-wildcard",
-    question: "次のコードのうち、コンパイルエラーになる行はどれか。1つ選びなさい。",
+    question: "次のコードをコンパイルした場合、コンパイルエラーになる行はどれか。1つ選びなさい。",
     className: "Wildcards",
     code: [
       "import java.util.*;",
@@ -425,7 +425,7 @@ export const goldCollectionsQuestions: GoldQuestion[] = [
     id: 10115,
     topic: "collections",
     variantOf: "gold-collections-wildcard",
-    question: "次のコードのうち、コンパイルエラーになる行はどれか。1つ選びなさい。",
+    question: "次のコードをコンパイルした場合、コンパイルエラーになる行はどれか。1つ選びなさい。",
     className: "SuperBox",
     code: [
       "import java.util.*;",
@@ -487,13 +487,13 @@ export const goldCollectionsQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "compile-error", line: 8 },
     explanation:
-      "総称型の型引数はコンパイル時の検査にだけ使われ、クラスファイルには残りません（型消去）。そのため print(List<String>) と print(List<Integer>) はどちらも print(List) という同じシグネチャになり、オーバーロードとして共存できず 8行目で name clash のコンパイルエラーになります。型消去は総称型導入以前のバイトコードとの互換性を保つための設計です。型引数だけが違うメソッドを並べたいときは、printStrings / printIntegers のようにメソッド名を分けます。",
+      "総称型の型引数はコンパイル時の型検査に使われ、実行時のメソッドのシグネチャからは取り除かれます（型消去）。そのため print(List<String>) と print(List<Integer>) はどちらも print(List) という同じシグネチャになり、オーバーロードとして共存できず 8行目で name clash のコンパイルエラーになります。型消去は総称型導入以前のバイトコードとの互換性を保つための設計です。型引数だけが違うメソッドを並べたいときは、printStrings / printIntegers のようにメソッド名を分けます。",
   },
   {
     id: 10117,
     topic: "collections",
     variantOf: "gold-collections-erasure",
-    question: "次のコードのうち、コンパイルエラーになる行はどれか。1つ選びなさい。",
+    question: "次のコードをコンパイルした場合、コンパイルエラーになる行はどれか。1つ選びなさい。",
     className: "Holder",
     code: [
       "public class Holder<T> {",
@@ -621,7 +621,7 @@ export const goldCollectionsQuestions: GoldQuestion[] = [
     id: 10121,
     topic: "collections",
     variantOf: "gold-collections-comparator-inference",
-    question: "次のコードのうち、コンパイルエラーになる行はどれか。1つ選びなさい。",
+    question: "次のコードをコンパイルした場合、コンパイルエラーになる行はどれか。1つ選びなさい。",
     className: "SortWords",
     code: [
       "import java.util.*;",

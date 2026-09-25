@@ -11,7 +11,7 @@ export const goldFunctionalQuestions: GoldQuestion[] = [
     id: 10201,
     topic: "functional",
     variantOf: "gold-functional-inner-instantiation",
-    question: "次のコードのうち、コンパイルエラーになる行はどれか。1つ選びなさい。",
+    question: "次のコードをコンパイルした場合、コンパイルエラーになる行はどれか。1つ選びなさい。",
     className: "Outer",
     code: [
       "public class Outer {",
@@ -47,7 +47,7 @@ export const goldFunctionalQuestions: GoldQuestion[] = [
     id: 10202,
     topic: "functional",
     variantOf: "gold-functional-inner-instantiation",
-    question: "次のコードのうち、コンパイルエラーになる行はどれか。1つ選びなさい。",
+    question: "次のコードをコンパイルした場合、コンパイルエラーになる行はどれか。1つ選びなさい。",
     className: "Library",
     code: [
       "public class Library {",
@@ -113,7 +113,7 @@ export const goldFunctionalQuestions: GoldQuestion[] = [
     id: 10204,
     topic: "functional",
     variantOf: "gold-functional-anonymous-capture",
-    question: "次のコードのうち、コンパイルエラーになる行はどれか。1つ選びなさい。",
+    question: "次のコードをコンパイルした場合、コンパイルエラーになる行はどれか。1つ選びなさい。",
     className: "Capture",
     code: [
       "public class Capture {",
@@ -146,7 +146,7 @@ export const goldFunctionalQuestions: GoldQuestion[] = [
     id: 10205,
     topic: "functional",
     variantOf: "gold-functional-anonymous-capture",
-    question: "次のコードのうち、コンパイルエラーになる行はどれか。1つ選びなさい。",
+    question: "次のコードをコンパイルした場合、コンパイルエラーになる行はどれか。1つ選びなさい。",
     className: "LambdaCapture",
     code: [
       "import java.util.*;",
@@ -175,7 +175,7 @@ export const goldFunctionalQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "compile-error", line: 12 },
     explanation:
-      "ラムダ式の中から代入できないのはローカル変数だけです。12行目の sum はローカル変数なので、ラムダ式内で書き換えようとするとコンパイルエラーになります。10行目の total は static フィールドであり、変数ではなくクラスの記憶領域を直接更新するので問題ありません。11行目の box は配列への参照自体は変わらず（実質的に final）、配列の中身を変えているだけなのでコンパイルは通ります。ただし配列で包む回避策は並列実行で競合を招くため、集計には Stream の sum やリダクションを使うのが本来の書き方です。",
+      "ラムダ式の中から代入できないのはローカル変数だけです。12行目の sum はローカル変数なので、ラムダ式内で書き換えようとするとコンパイルエラーになります。10行目の total はローカル変数ではなく static フィールドなので、実質的に final である必要はなく、ラムダ式の中から更新できます。11行目の box は配列への参照自体は変わらず（実質的に final）、配列の中身を変えているだけなのでコンパイルは通ります。ただし配列で包む回避策は並列実行で競合を招くため、集計には Stream の sum やリダクションを使うのが本来の書き方です。",
   },
   {
     id: 10206,
@@ -212,7 +212,7 @@ export const goldFunctionalQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "outer anon" },
     explanation:
-      "ラムダ式は新しいスコープやオブジェクトを作らず、本体は囲んでいるメソッドの一部として扱われます。そのためラムダ式の中の this は、run() を呼んだ ThisRef のインスタンスを指し \"outer\" になります。一方、無名クラスはそれ自体が新しいクラスのインスタンスなので、その中の this は無名クラスのインスタンスを指し \"anon\" になります。ラムダ式は「インタフェースを実装したクラスの省略記法」ではなく「処理そのもの」を表すという設計の違いが、this の意味の違いに現れています。",
+      "ラムダ式は新しい名前のスコープを作らず、本体は囲んでいるメソッドと同じスコープで解釈されます（ラムダ式を評価すると関数型インタフェースのインスタンスは作られますが、本体の this はそれを指しません）。そのためラムダ式の中の this は、run() を呼んだ ThisRef のインスタンスを指し \"outer\" になります。一方、無名クラスはそれ自体が新しいクラスのインスタンスなので、その中の this は無名クラスのインスタンスを指し \"anon\" になります。ラムダ式は「インタフェースを実装したクラスの省略記法」ではなく「処理そのもの」を表すという設計の違いが、this の意味の違いに現れています。",
   },
 
   // -------------------------------------------------------- 関数型インタフェース
@@ -258,7 +258,7 @@ export const goldFunctionalQuestions: GoldQuestion[] = [
     id: 10208,
     topic: "functional",
     variantOf: "gold-functional-interface-definition",
-    question: "次のコードのうち、コンパイルエラーになる行はどれか。1つ選びなさい。",
+    question: "次のコードをコンパイルした場合、コンパイルエラーになる行はどれか。1つ選びなさい。",
     className: "Shapes",
     code: [
       "interface Named {",
@@ -346,7 +346,7 @@ export const goldFunctionalQuestions: GoldQuestion[] = [
     id: 10211,
     topic: "functional",
     variantOf: "gold-functional-builtin-types",
-    question: "次のコードのうち、コンパイルエラーになる行はどれか。1つ選びなさい。",
+    question: "次のコードをコンパイルした場合、コンパイルエラーになる行はどれか。1つ選びなさい。",
     className: "Builtins",
     code: [
       "import java.util.*;",
@@ -407,7 +407,7 @@ export const goldFunctionalQuestions: GoldQuestion[] = [
     id: 10213,
     topic: "functional",
     variantOf: "gold-functional-lambda-syntax",
-    question: "次のコードのうち、コンパイルエラーになる行はどれか。1つ選びなさい。",
+    question: "次のコードをコンパイルした場合、コンパイルエラーになる行はどれか。1つ選びなさい。",
     className: "LambdaSyntax",
     code: [
       "import java.util.function.*;",
@@ -432,7 +432,7 @@ export const goldFunctionalQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "compile-error", line: 8 },
     explanation:
-      "ラムダ式の引数は「すべて型を省略」「すべて var」「すべて型を明示」のいずれかに揃える必要があり、8行目のように明示的な型と var を混在させるとコンパイルエラーになります。var を書けるようになったのは、引数に @NonNull などのアノテーションを付けたいが型名は書きたくない、という用途のためです（アノテーションは型か var が無いと付けられません）。混在を許さないのは、引数ごとに推論の有無が変わると読み手が型を追いにくくなるからです。本体を波括弧で囲む 7行目の形では、値を返すのに return が必要です。",
+      "ラムダ式の引数は「すべて型を省略」「すべて var」「すべて型を明示」のいずれかに揃える必要があり、8行目のように明示的な型と var を混在させるとコンパイルエラーになります。var を書けるようになったのは、引数に @NonNull などのアノテーションを付けたいが型名は書きたくない、という用途のためです（アノテーションは型か var が無いと付けられません）。引数ごとに書き方がばらばらだと読み手が型を追いにくくなるため、仕様で統一が求められています。本体を波括弧で囲む 7行目の形では、値を返すのに return が必要です。",
   },
   {
     id: 10214,
@@ -456,13 +456,13 @@ export const goldFunctionalQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "12 e ABC" },
     explanation:
-      "メソッド参照には 4 種類あります。Integer::parseInt は static メソッドの参照で、引数をそのまま parseInt に渡します。String::charAt は「特定されていないインスタンス」のメソッド参照で、BiFunction の第 1 引数（\"hello\"）がレシーバーになり、第 2 引数が charAt に渡されるので 'e' になります。\"abc\"::toUpperCase は特定のオブジェクトのメソッド参照で、レシーバーが固定されているので引数なしの Supplier に適合します。同じ「クラス名::メソッド名」でも、static か インスタンスメソッドかで引数の割り当てが変わる点が要点です。",
+      "メソッド参照には、static メソッドの参照、不特定のオブジェクトのインスタンスメソッドの参照、特定のオブジェクトのインスタンスメソッドの参照、コンストラクタ参照の 4 種類があります。Integer::parseInt は static メソッドの参照で、引数をそのまま parseInt に渡します。String::charAt は不特定のオブジェクトのインスタンスメソッドの参照で、BiFunction の第 1 引数（\"hello\"）がレシーバーになり、第 2 引数が charAt に渡されるので 'e' になります。\"abc\"::toUpperCase は特定のオブジェクトのメソッド参照で、レシーバーが固定されているので引数なしの Supplier に適合します。同じ「クラス名::メソッド名」の形でも、static メソッドかインスタンスメソッドかで引数の割り当てが変わる点が要点です。",
   },
   {
     id: 10215,
     topic: "functional",
     variantOf: "gold-functional-method-reference",
-    question: "次のコードのうち、コンパイルエラーになる行はどれか。1つ選びなさい。",
+    question: "次のコードをコンパイルした場合、コンパイルエラーになる行はどれか。1つ選びなさい。",
     className: "AmbiguousRef",
     code: [
       "import java.util.function.*;",
@@ -491,7 +491,7 @@ export const goldFunctionalQuestions: GoldQuestion[] = [
     id: 10216,
     topic: "functional",
     variantOf: "gold-functional-default-conflict",
-    question: "次のコードのうち、コンパイルエラーになる行はどれか。1つ選びなさい。",
+    question: "次のコードをコンパイルした場合、コンパイルエラーになる行はどれか。1つ選びなさい。",
     className: "Robot",
     code: [
       "interface Walker {",

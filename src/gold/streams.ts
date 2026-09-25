@@ -190,7 +190,7 @@ export const goldStreamsQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "{a=2, b=2, c=1}" },
     explanation:
-      "groupingBy(分類関数, マップの生成, 下流コレクタ) は、分類関数の結果ごとに要素をまとめ、各グループに下流コレクタを適用します。ここでは先頭文字でグループ化し、counting() で各グループの件数（Long）を数えています。下流コレクタを省略すると各グループは要素の List になり、マップの生成を省略すると HashMap になります（順序は保証されません）。第 2 引数に TreeMap::new を渡すことで、キーの昇順で並んだ結果が得られます。",
+      "groupingBy(分類関数, マップの生成, 下流コレクタ) は、分類関数の結果ごとに要素をまとめ、各グループに下流コレクタを適用します。ここでは先頭文字でグループ化し、counting() で各グループの件数（Long）を数えています。下流コレクタを省略すると各グループは要素の List になり、マップの生成を省略した場合のマップは型も順序も保証されません（現在の実装は HashMap）。第 2 引数に TreeMap::new を渡すことで、キーの昇順で並んだ結果が得られます。",
   },
   {
     id: 10308,
@@ -423,7 +423,7 @@ export const goldStreamsQuestions: GoldQuestion[] = [
     id: 10316,
     topic: "streams",
     variantOf: "gold-streams-primitive",
-    question: "次のコードのうち、コンパイルエラーになる行はどれか。1つ選びなさい。",
+    question: "次のコードをコンパイルした場合、コンパイルエラーになる行はどれか。1つ選びなさい。",
     className: "SumTest",
     code: [
       "import java.util.*;",
@@ -443,8 +443,7 @@ export const goldStreamsQuestions: GoldQuestion[] = [
       "9行目でコンパイルエラーになる",
       "7行目でコンパイルエラーになる",
       "8行目でコンパイルエラーになる",
-      "コンパイルは成功し、18 と出力される",
-      "コンパイルは成功し、12 と出力される",
+      "コンパイルは成功し、15 と出力される",
     ],
     correct: [0],
     expected: { kind: "compile-error", line: 9 },

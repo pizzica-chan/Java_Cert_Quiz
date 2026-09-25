@@ -474,6 +474,22 @@ function compareResult(expected: ExpectedResult, actual: RunResult): string | nu
  * 出力問題なら選択肢そのものが出力値になっているはずで、
  * コンパイルエラー・例外が答えならその旨が選択肢に書かれているはず。
  */
+/**
+ * 「N行目でコンパイルエラーになる」という選択肢が、正誤どちらの扱いでも実機と矛盾していないかを見る。
+ * 期待した行でエラーが出ていても、誤答として並べた別の行でもエラーが出ていれば、
+ * その誤答も正しいことになり問題が成り立たない（expected.line の照合だけでは検出できない）。
+ */
+function checkCompileErrorChoices(q: Question, actual: RunResult): string | null {
+  if (actual.kind !== "compile-error") return null;
+  const errorLines = new Set(actual.lines);
+  const wrongButTrue = q.choices.filter((choice, i) => {
+    const line = choice.match(/^(\d+)行目でコンパイルエラーになる$/)?.[1];
+    return line !== undefined && !q.correct.includes(i) && errorLines.has(Number(line));
+  });
+  if (wrongButTrue.length === 0) return null;
+  return `誤答の選択肢「${wrongButTrue.join("」「")}」も実機では正しい（エラーの行: ${[...errorLines].join(", ")}）`;
+}
+
 function checkChoiceConsistency(q: Question, expected: ExpectedResult): string | null {
   if (q.correct.length !== 1) return null; // 複数選択問題はこの照合の対象外
 
@@ -626,6 +642,10 @@ async function main(): Promise<void> {
         const inconsistent = checkChoiceConsistency(q, q.expected!);
         if (inconsistent) {
           issues.push({ questionId: q.id, rule: "choice-mismatch", message: inconsistent });
+        }
+        const ambiguous = checkCompileErrorChoices(q, actual);
+        if (ambiguous) {
+          issues.push({ questionId: q.id, rule: "choice-ambiguous", message: ambiguous });
         }
       }
     }

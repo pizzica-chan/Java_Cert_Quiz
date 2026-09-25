@@ -37,7 +37,7 @@ export const goldIoQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "exception", type: "NullPointerException" },
     explanation:
-      "System.console() は、JVM が対話的な端末（コンソール）に接続されている場合にだけ Console オブジェクトを返し、入出力がファイルやパイプにリダイレクトされている場合や、IDE・バックグラウンドから起動した場合には null を返します。そのため console.readLine の呼び出しで NullPointerException になります。Console はパスワードの非表示入力（readPassword）など端末に固有の機能を提供するクラスなので、端末が無い環境では存在自体を null で表す設計です。バッチ処理のように端末が無い可能性がある場面では、null を確認するか、System.in を BufferedReader で読む方法を使います。",
+      "Java 17 の System.console() は、JVM が対話的な端末（コンソール）に接続されている場合にだけ Console オブジェクトを返し、入出力がファイルやパイプにリダイレクトされている場合や、IDE・バックグラウンドから起動した場合には null を返します。そのため console.readLine の呼び出しで NullPointerException になります。Console はパスワードの非表示入力（readPassword）など端末に固有の機能を提供するクラスなので、端末が無い環境では存在自体を null で表す設計です。バッチ処理のように端末が無い可能性がある場面では、null を確認するか、System.in を BufferedReader で読む方法を使います。",
   },
   {
     id: 10602,
@@ -117,7 +117,7 @@ export const goldIoQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "0 5" },
     explanation:
-      "BufferedWriter は書き込まれた文字をいったん内部のバッファに溜め、バッファが一杯になるか flush() / close() が呼ばれたときにまとめて下位のストリームへ書き出します。そのため write(\"hello\") の直後はまだファイルに何も書かれておらずサイズは 0 で、close() によってバッファが書き出されて 5 バイトになります。小さな書き込みのたびにディスクへアクセスするのを避けて性能を上げるための仕組みですが、close() を忘れるとデータが失われます。try-with-resources で確実に閉じるのが基本です。",
+      "BufferedWriter は書き込まれた文字をいったん内部のバッファに溜め、バッファが一杯になるか flush() / close() が呼ばれたときにまとめて下位のストリームへ書き出します。そのため write(\"hello\") の直後はまだファイルに何も書かれておらずサイズは 0 で、close() によってバッファが書き出されて 5 バイトになります。小さな書き込みのたびにディスクへアクセスするのを避けて性能を上げるための仕組みです（FileWriter 自体も文字をバイトに変換する内部バッファを持つため、BufferedWriter が無くても flush() / close() までは書き出されないことがあります）。close() を忘れるとデータが失われます。try-with-resources で確実に閉じるのが基本です。",
   },
   {
     id: 10605,
@@ -405,7 +405,7 @@ export const goldIoQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "exception", type: "DirectoryNotEmptyException", stdout: "false" },
     explanation:
-      "Files.deleteIfExists は、対象が存在しなければ何もせずに false を返します（存在して削除できれば true）。一方 Files.delete は、対象が無ければ NoSuchFileException、空でないディレクトリなら DirectoryNotEmptyException をスローします。work ディレクトリには a.txt があるため、削除できずに例外になります。ディレクトリを中身ごと削除するメソッドは用意されておらず、Files.walk で深い方から順に削除する必要があります。誤って大量のファイルを消す事故を防ぐため、再帰的な削除は明示的に書かせる設計になっています。",
+      "Files.deleteIfExists は、対象が存在しなければ何もせずに false を返します（存在して削除できれば true）。一方 Files.delete は、対象が無ければ NoSuchFileException、空でないディレクトリなら DirectoryNotEmptyException をスローします。work ディレクトリには a.txt があるため、削除できずに例外になります。Files にはディレクトリを中身ごと削除するメソッドが無いため、Files.walk で得たパスを深い方から順に削除する必要があります。再帰的な削除は影響範囲が大きいので、どこまで消すかをコードで明示する形になっていると捉えるとよいでしょう。",
   },
   {
     id: 10614,
@@ -467,7 +467,7 @@ export const goldIoQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "exception", type: "NoSuchFileException", stdout: "ab" },
     explanation:
-      "Files.writeString はオプションを省略すると CREATE、TRUNCATE_EXISTING、WRITE を指定したものとして動き、ファイルを作成するか中身を空にしてから書き込みます。オプションを明示すると既定の組み合わせは使われず、指定したものだけが効きます。6行目は CREATE と APPEND でファイルを作って a を書き、7行目は既存の memo.txt に b を追記するので ab になります。9行目は APPEND だけで CREATE が無いため、存在しない other.txt を作成できず NoSuchFileException になります。",
+      "Files.writeString はオプションを省略すると CREATE、TRUNCATE_EXISTING、WRITE を指定したものとして動き、ファイルを作成するか中身を空にしてから書き込みます。オプションを 1 つでも指定すると、この既定の組み合わせ（特に CREATE）は適用されません（書き込み用に開く WRITE は指定しなくても付きます）。6行目は CREATE と APPEND でファイルを作って a を書き、7行目は既存の memo.txt に b を追記するので ab になります。9行目は APPEND だけで CREATE が無いため、存在しない other.txt を作成できず NoSuchFileException になります。",
   },
 
   // ------------------------------------------------- Stream API によるファイル操作

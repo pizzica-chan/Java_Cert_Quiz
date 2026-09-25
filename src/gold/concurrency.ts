@@ -58,7 +58,7 @@ export const goldConcurrencyQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "exception", type: "IllegalThreadStateException", stdout: "run" },
     explanation:
-      "Thread オブジェクトは一度しか start() できません。1 回目の start() で run と出力され、join() でその終了を待ったあと、終了済みのスレッドに再度 start() を呼ぶと IllegalThreadStateException がスローされます。スレッドは「新規 → 実行可能 → 終了」と一方向にしか状態遷移せず、終了したスレッドを再び実行可能に戻すことはできない設計です。同じ処理をもう一度別スレッドで動かしたい場合は、新しい Thread を作るか、ExecutorService にタスクとして繰り返し渡します。",
+      "Thread オブジェクトは一度しか start() できません。1 回目の start() で run と出力され、join() でその終了を待ったあと、終了済みのスレッドに再度 start() を呼ぶと IllegalThreadStateException がスローされます。start() を呼べるのはスレッドが NEW（新規）状態のときだけで、スレッドの状態は NEW から TERMINATED（終了）へ一方向に進み、終了したスレッドを NEW に戻す手段はありません。同じ処理をもう一度別スレッドで動かしたい場合は、新しい Thread を作るか、ExecutorService にタスクとして繰り返し渡します。",
   },
 
   // ---------------------------------------------------------- ExecutorService
@@ -98,7 +98,7 @@ export const goldConcurrencyQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "IOException" },
     explanation:
-      "ラムダ式の本体が値を返さずに例外をスローしているため、submit には Runnable ではなく Callable として解釈されます。Callable の call() は throws Exception と宣言されているので、検査例外の IOException をスローしてもコンパイルエラーになりません。タスク内で発生した例外はその場では伝わらず、Future.get() を呼んだときに ExecutionException に包まれてスローされ、getCause() で元の IOException を取り出せます。別スレッドで起きた例外を呼び出し元に確実に届けるための仕組みで、get() を呼ばないと例外に気付けない点に注意が必要です。",
+      "本体が例外をスローするだけで正常に終わらないラムダ式は、戻り値の無い Runnable にも、戻り値のある Callable にも適合します。submit(Runnable) と submit(Callable) の両方が候補になる場合は、戻り値を持つ Callable 版の方がより具体的とみなされて選ばれます。Callable の call() は throws Exception と宣言されているので、検査例外の IOException をスローしてもコンパイルエラーになりません（Runnable が選ばれていたら run() は検査例外をスローできないため、コンパイルエラーになるところです）。タスク内で発生した例外はその場では伝わらず、Future.get() を呼んだときに ExecutionException に包まれてスローされ、getCause() で元の IOException を取り出せます。別スレッドで起きた例外を呼び出し元に確実に届けるための仕組みで、get() を呼ばないと例外に気付けない点に注意が必要です。",
   },
   {
     id: 10504,
@@ -281,7 +281,7 @@ export const goldConcurrencyQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "5 7 17 34" },
     explanation:
-      "getAndIncrement() は後置の i++ に相当し、増やす前の値 5 を返して内部の値を 6 にします。incrementAndGet() は前置の ++i に相当し、7 にしてから 7 を返します。addAndGet(10) は 17 を返し、updateAndGet は関数を適用した後の値 34 を返します。AtomicInteger のこれらの操作は、ロックを使わずに CPU の比較交換（CAS）命令で「読み出しから書き込みまで」を不可分に行うため、複数スレッドから同時に呼んでも更新が失われません。",
+      "getAndIncrement() は後置の i++ に相当し、増やす前の値 5 を返して内部の値を 6 にします。incrementAndGet() は前置の ++i に相当し、7 にしてから 7 を返します。addAndGet(10) は 17 を返し、updateAndGet は関数を適用した後の値 34 を返します。AtomicInteger のこれらの操作は、ロックを使わずに CPU の不可分な命令（比較交換＝CAS など）で「読み出しから書き込みまで」を 1 つの操作として行うため、複数スレッドから同時に呼んでも更新が失われません。",
   },
   {
     id: 10510,

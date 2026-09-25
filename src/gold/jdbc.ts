@@ -47,19 +47,22 @@ export const goldJdbcQuestions: GoldQuestion[] = [
     id: 10702,
     topic: "jdbc",
     variantOf: "gold-jdbc-connect",
-    question: "次のコードのうち、コンパイルエラーになる行はどれか。1つ選びなさい。",
+    question: "次のコードをコンパイルした場合、コンパイルエラーになる行はどれか。1つ選びなさい。",
     className: "CountRows",
     code: [
       "import java.sql.*;",
       "",
       "public class CountRows {",
-      "    static int count(Connection con) {",
-      '        String sql = "SELECT COUNT(*) FROM item";',
+      "    static int count(Connection con) throws SQLException {",
       "        try (Statement st = con.createStatement()) {",
-      "            ResultSet rs = st.executeQuery(sql);",
+      '            ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM item");',
       "            rs.next();",
       "            return rs.getInt(1);",
       "        }",
+      "    }",
+      "",
+      "    static void print(Connection con) {",
+      "        System.out.println(count(con));",
       "    }",
       "",
       "    public static void main(String[] args) {",
@@ -68,16 +71,16 @@ export const goldJdbcQuestions: GoldQuestion[] = [
       "}",
     ],
     choices: [
-      "6行目でコンパイルエラーになる",
-      "4行目でコンパイルエラーになる",
-      "9行目でコンパイルエラーになる",
       "13行目でコンパイルエラーになる",
+      "5行目でコンパイルエラーになる",
+      "6行目でコンパイルエラーになる",
+      "12行目でコンパイルエラーになる",
       "コンパイルは成功する",
     ],
     correct: [0],
-    expected: { kind: "compile-error", line: 6 },
+    expected: { kind: "compile-error", line: 13 },
     explanation:
-      "JDBC の API はほとんどのメソッドが検査例外の SQLException をスローすると宣言しています。count メソッドは SQLException を catch も throws もしていないため、最初に SQLException を発生しうる 6行目の createStatement() でコンパイルエラーになります（try-with-resources でも、暗黙に呼ばれる close() の例外を含めて処理が必要です）。データベースとの通信はネットワークやデータの状態によって失敗しうるので、呼び出し側に対処を強制する検査例外になっているのです。メソッドに throws SQLException を付けるか、catch して処理します。",
+      "JDBC の API は、ほとんどのメソッドが検査例外の SQLException をスローすると宣言しています。count メソッドは throws SQLException を宣言しているので、中で createStatement や executeQuery を呼んでも問題ありません（try-with-resources が暗黙に呼ぶ close() の例外も含めて、呼び出し元に任せています）。一方 print メソッドは、SQLException をスローしうる count を呼んでいるのに catch も throws もしていないため、13行目がコンパイルエラーになります。データベースとの通信はネットワークやデータの状態によって失敗しうるので、呼び出し側に対処を強制する検査例外になっているのです。print にも throws SQLException を付けるか、catch して処理します。",
   },
   {
     id: 10703,
@@ -184,7 +187,7 @@ export const goldJdbcQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "1:error" },
     explanation:
-      "ResultSet の列番号は 0 ではなく 1 から始まります。1 行目で getString(1) は id 列の値 1 を文字列として返しますが、getString(0) は存在しない列を指すため SQLException がスローされ、catch で error が出力されます。getString は数値の列にも使え、値を文字列に変換して返します。PreparedStatement のパラメータ番号も同じく 1 始まりで、SQL の世界の番号付けに合わせた設計です。列の順序変更に強いコードにするには、rs.getString(\"name\") のように列名（ラベル）で指定する方法もあります。",
+      "ResultSet の列番号は 0 ではなく 1 から始まります。1 行目で getString(1) は id 列の値 1 を文字列として返しますが、getString(0) は存在しない列を指すため SQLException がスローされ、catch で error が出力されます。getString は数値の列にも使え、値を文字列に変換して返します。PreparedStatement のパラメータ番号も同じく 1 始まりなので、Java の配列やリストの 0 始まりと混同しないよう注意します。列の順序変更に強いコードにするには、rs.getString(\"name\") のように列名（ラベル）で指定する方法もあります。",
   },
   {
     id: 10706,
@@ -354,7 +357,7 @@ export const goldJdbcQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "error" },
     explanation:
-      "PreparedStatement は、SQL 中のすべての ? に値を設定してからでないと実行できません。2 番目の ? に値を設定しないまま executeQuery を呼ぶと SQLException がスローされ、error が出力されます。未設定のパラメータを暗黙に NULL として扱わないのは、設定漏れがあっても「たまたま 0 件」のように見えて気付けない事態を防ぐためです。NULL を渡したい場合は setNull(番号, Types.INTEGER) のように明示します。",
+      "PreparedStatement は、SQL 中のすべての ? に値を設定してからでないと実行できません。2 番目の ? に値を設定しないまま executeQuery を呼ぶと SQLException がスローされ、error が出力されます。未設定のパラメータが暗黙に NULL として扱われることはないので、設定漏れは「たまたま 0 件」のように見えることなく、実行時の例外として表面化します。NULL を渡したい場合は setNull(番号, Types.INTEGER) のように明示します。",
   },
   {
     id: 10711,
@@ -387,7 +390,7 @@ export const goldJdbcQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "error" },
     explanation:
-      "プレースホルダの ? で置き換えられるのは SQL 中の「値」の位置だけで、テーブル名や列名、キーワードのような SQL の構造には使えません。PreparedStatement は ? を含んだまま SQL を解析（プリコンパイル）するため、FROM の後に ? がある SQL は構文として成り立たず、prepareStatement の時点で SQLException になります。値と構造を分離することが SQL インジェクションを防ぐ仕組みの核心なので、構造の部分を外から差し替えられないのは意図どおりの制約です。テーブル名を動的に選ぶ必要がある場合は、許可したものの一覧と照合してから文字列として組み立てます。",
+      "プレースホルダの ? で置き換えられるのは SQL 中の「値」の位置だけで、テーブル名や列名、キーワードのような SQL の構造には使えません。PreparedStatement は ? を含んだまま SQL を解析（プリコンパイル）する前提の仕組みなので、FROM の後に ? がある SQL は構文として成り立たず、SQLException になります（例外が prepareStatement と executeQuery のどちらで起きるかはドライバによって異なり、H2 では prepareStatement の時点です）。値と構造を分離することが SQL インジェクションを防ぐ仕組みの核心なので、構造の部分を外から差し替えられないのは意図どおりの制約です。テーブル名を動的に選ぶ必要がある場合は、許可したものの一覧と照合してから文字列として組み立てます。",
   },
 
   // ------------------------------------------------------------ トランザクション
@@ -529,7 +532,7 @@ export const goldJdbcQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "20 error" },
     explanation:
-      "createStatement() を引数なしで呼ぶと、ResultSet の種類は既定の TYPE_FORWARD_ONLY になります。next() を 2 回呼んで 2 行目の 20 を読むところまでは問題ありませんが、前方向にしか移動できない ResultSet で previous() を呼ぶと SQLException がスローされ、error が出力されます。前方向専用にすると、ドライバは読み終えた行を保持せずデータベースから順に受け取るだけで済むため、大量の行を扱ってもメモリを節約できます。行を行き来する必要があるときだけ TYPE_SCROLL_INSENSITIVE などを指定します。",
+      "createStatement() を引数なしで呼ぶと、ResultSet の種類は既定の TYPE_FORWARD_ONLY になります。next() を 2 回呼んで 2 行目の 20 を読むところまでは問題ありませんが、前方向にしか移動できない ResultSet で previous() を呼ぶと SQLException がスローされ、error が出力されます。前方向専用であれば、ドライバは読み終えた行を保持しておく必要が無いため、大量の行を扱うときにメモリを節約しやすくなります。行を行き来する必要があるときだけ TYPE_SCROLL_INSENSITIVE などを指定します。",
   },
 
   // ---------------------------------------------------------- CallableStatement
@@ -574,7 +577,7 @@ export const goldJdbcQuestions: GoldQuestion[] = [
     id: 10717,
     topic: "jdbc",
     variantOf: "gold-jdbc-callable",
-    question: "次のコードのうち、コンパイルエラーになる行はどれか。1つ選びなさい。",
+    question: "次のコードをコンパイルした場合、コンパイルエラーになる行はどれか。1つ選びなさい。",
     className: "StatementTypes",
     code: [
       "import java.sql.*;",
