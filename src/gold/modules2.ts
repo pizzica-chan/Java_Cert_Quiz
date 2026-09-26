@@ -783,4 +783,146 @@ export const goldModulesQuestions2: GoldQuestion[] = [
     explanation:
       "1 つのモジュール宣言の中で、同じモジュールを複数回 requires することはできません。修飾子（static や transitive）が異なっていても重複とみなされ、module-info.java でコンパイルエラーになります。コンパイル時と実行時の両方で必要なら requires、コンパイル時だけなら requires static、利用者にも読み込ませたいなら requires transitive と、1 つの依存について 1 行で性質を指定します（static と transitive は同じ行で併用できます）。モジュールの依存関係は重複や矛盾の無い宣言として検査されるので、依存の記述が曖昧になりません。",
   },
+
+  // ------------------------------------------------------------ java コマンドのモジュール関連オプション
+  {
+    id: 10436,
+    topic: "modules",
+    variantOf: "gold-modules-command-options",
+    question:
+      "次のモジュール構成を out ディレクトリにコンパイルした後、java -p out --add-exports com.example.model/com.example.model.internal=com.example.app -m com.example.app/com.example.app.Main を実行した。結果として正しいものはどれか。1つ選びなさい。",
+    choices: [
+      "secret と出力される",
+      "denied と出力される",
+      "--add-exports は javac 専用のオプションなので、java コマンドの起動に失敗する",
+      "com.example.model の module-info.java を書き換えない限り公開範囲は変えられないため、denied と出力される",
+    ],
+    correct: [0],
+    expected: { kind: "output", stdout: "secret" },
+    moduleSetup: {
+      sources: [
+        { module: "com.example.model", path: "module-info.java", content: ["module com.example.model {", "    exports com.example.model;", "}"] },
+        { module: "com.example.model", path: "com/example/model/Item.java", content: ["package com.example.model;", "", "public class Item {", "}"] },
+        {
+          module: "com.example.model",
+          path: "com/example/model/internal/Secret.java",
+          content: ["package com.example.model.internal;", "", "public class Secret {", "    public String value() {", "        return \"secret\";", "    }", "}"],
+        },
+        { module: "com.example.app", path: "module-info.java", content: ["module com.example.app {", "    requires com.example.model;", "}"] },
+        {
+          module: "com.example.app",
+          path: "com/example/app/Main.java",
+          content: [
+            "package com.example.app;",
+            "",
+            "public class Main {",
+            "    public static void main(String[] args) throws Exception {",
+            "        Class<?> c = Class.forName(\"com.example.model.internal.Secret\");",
+            "        try {",
+            "            Object s = c.getConstructor().newInstance();",
+            "            System.out.println(c.getMethod(\"value\").invoke(s));",
+            "        } catch (IllegalAccessException e) {",
+            "            System.out.println(\"denied\");",
+            "        }",
+            "    }",
+            "}",
+          ],
+        },
+      ],
+      tool: {
+        command: "java",
+        args: ["-p", "out", "--add-exports", "com.example.model/com.example.model.internal=com.example.app", "-m", "com.example.app/com.example.app.Main"],
+      },
+    },
+    explanation:
+      "--add-exports 元モジュール/パッケージ=先モジュール は、module-info.java を変更せずに、起動時（java）やコンパイル時（javac）に公開範囲を追加するオプションです。com.example.model.internal は exports されていないので、オプションが無ければリフレクションでのインスタンス化は IllegalAccessException になりますが、このオプションで com.example.app に対して公開されたので secret と出力されます。宛先に ALL-UNNAMED を指定するとクラスパス上のコードに公開できます。ソースを変更できないライブラリの内部 API を移行期間中だけ使い続けるための応急処置で、恒久的な解決策ではありません。",
+  },
+  {
+    id: 10437,
+    topic: "modules",
+    variantOf: "gold-modules-command-options",
+    question:
+      "次のモジュール構成を out ディレクトリにコンパイルした後、java -p out --add-opens com.example.model/com.example.model=com.example.app -m com.example.app/com.example.app.Main を実行した。結果として正しいものはどれか。1つ選びなさい。",
+    choices: [
+      "secret と出力される",
+      "実行時に InaccessibleObjectException がスローされる",
+      "com.example.model パッケージは既に exports されているため、--add-opens を指定すると起動に失敗する",
+      "com.example.app の Main.java でコンパイルエラーになる",
+    ],
+    correct: [0],
+    expected: { kind: "output", stdout: "secret" },
+    moduleSetup: {
+      sources: [
+        { module: "com.example.model", path: "module-info.java", content: ["module com.example.model {", "    exports com.example.model;", "}"] },
+        { module: "com.example.model", path: "com/example/model/User.java", content: ["package com.example.model;", "", "public class User {", "    private String password = \"secret\";", "}"] },
+        { module: "com.example.app", path: "module-info.java", content: ["module com.example.app {", "    requires com.example.model;", "}"] },
+        {
+          module: "com.example.app",
+          path: "com/example/app/Main.java",
+          content: [
+            "package com.example.app;",
+            "",
+            "import java.lang.reflect.Field;",
+            "import com.example.model.User;",
+            "",
+            "public class Main {",
+            "    public static void main(String[] args) throws Exception {",
+            "        Field f = User.class.getDeclaredField(\"password\");",
+            "        f.setAccessible(true);",
+            "        System.out.println(f.get(new User()));",
+            "    }",
+            "}",
+          ],
+        },
+      ],
+      tool: {
+        command: "java",
+        args: ["-p", "out", "--add-opens", "com.example.model/com.example.model=com.example.app", "-m", "com.example.app/com.example.app.Main"],
+      },
+    },
+    explanation:
+      "exports されているパッケージでも、private メンバーへのリフレクション（setAccessible(true)）は opens されていなければ InaccessibleObjectException になります。--add-opens は opens を起動時に追加するオプションで、module-info.java に opens com.example.model to com.example.app; と書いたのと同じ効果になるため、private フィールドの値 secret を読み出せます。exports とは別の権限なので、既に exports されているパッケージに追加しても問題ありません。古いライブラリがリフレクションで JDK の内部に触れて動かないときの回避策としてよく使われますが、依存を隠れた形で残すことにもなるので、ライブラリの更新で解消するのが本来の対処です。",
+  },
+  {
+    id: 10438,
+    topic: "modules",
+    variantOf: "gold-modules-requires-static",
+    question:
+      "次のモジュール構成を out ディレクトリにコンパイルした後、java -p out --add-modules com.example.debug -m com.example.app/com.example.app.Main を実行した。結果として正しいものはどれか。1つ選びなさい。",
+    choices: [
+      "true と出力される",
+      "false と出力される",
+      "--add-modules は requires static のモジュールには効かないため、起動に失敗する",
+      "com.example.app の module-info.java でコンパイルエラーになる",
+    ],
+    correct: [0],
+    expected: { kind: "output", stdout: "true" },
+    moduleSetup: {
+      sources: [
+        { module: "com.example.debug", path: "module-info.java", content: ["module com.example.debug {", "    exports com.example.debug;", "}"] },
+        { module: "com.example.debug", path: "com/example/debug/Tracer.java", content: ["package com.example.debug;", "", "public class Tracer {", "}"] },
+        { module: "com.example.app", path: "module-info.java", content: ["module com.example.app {", "    requires static com.example.debug;", "}"] },
+        {
+          module: "com.example.app",
+          path: "com/example/app/Main.java",
+          content: [
+            "package com.example.app;",
+            "",
+            "public class Main {",
+            "    public static void main(String[] args) {",
+            "        boolean found = ModuleLayer.boot().findModule(\"com.example.debug\").isPresent();",
+            "        System.out.println(found);",
+            "    }",
+            "}",
+          ],
+        },
+      ],
+      tool: {
+        command: "java",
+        args: ["-p", "out", "--add-modules", "com.example.debug", "-m", "com.example.app/com.example.app.Main"],
+      },
+    },
+    explanation:
+      "requires static で指定したモジュールは、ほかに必要とするモジュールが無ければ実行時に解決されません（オプションなしで起動すると false です）。--add-modules は、指定したモジュールを起動時のモジュール・グラフの根（ルート）に追加するオプションで、これによって com.example.debug が解決され、app の requires static の読み込み関係も有効になるので true と出力されます。任意の機能を起動オプションで有効にしたり、クラスパス上のアプリにモジュール（java.sql など）を明示的に追加したりするときに使います。",
+  },
 ];

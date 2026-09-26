@@ -425,4 +425,104 @@ export const goldLocalizationQuestions2: GoldQuestion[] = [
     explanation:
       "ロケールを指定しない NumberFormat.getInstance() は、呼び出した時点のデフォルトロケールで書式を作ります。before は ja_JP の書式（桁区切りカンマ、小数点ピリオド）で作られ、その後に Locale.setDefault でデフォルトを変えても、作成済みの before は影響を受けません。after はドイツの書式で作られるので 1.234,5 です。Locale.setDefault は JVM 全体の既定値を変える（同じ JVM の他の処理にも影響する）ので、特定の処理だけロケールを変えたいなら、setDefault を使わずに getInstance(Locale) のようにロケールを引数で渡します。",
   },
+
+  // ------------------------------------------------------------ .properties の書式
+  {
+    id: 10833,
+    topic: "localization",
+    variantOf: "gold-localization-properties-format",
+    question: `${JA_NOTE}クラスパス上に次のプロパティファイルがある。次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。`,
+    className: "PropsFormat",
+    code: [
+      "import java.util.*;",
+      "",
+      "public class PropsFormat {",
+      "    public static void main(String[] args) {",
+      "        ResourceBundle rb = ResourceBundle.getBundle(\"Config\", Locale.ROOT);",
+      "        System.out.println(\"[\" + rb.getString(\"a\") + \"][\" + rb.getString(\"b\") + \"][\"",
+      "                + rb.getString(\"c\") + \"][\" + rb.getString(\"d\") + \"]\");",
+      "    }",
+      "}",
+    ],
+    resources: [
+      {
+        path: "Config.properties",
+        content: ["# comment", "a = one", "b:two", "c three", "d=long \\", "    text", "! also comment"],
+      },
+    ],
+    choices: [
+      "[one][two][three][long text]",
+      "[ one][two][three][long \\]",
+      "[one][two][three][long ]",
+      "[one][two] と出力された後、MissingResourceException がスローされる",
+      "[one][b:two] と出力された後、MissingResourceException がスローされる",
+    ],
+    correct: [0],
+    expected: { kind: "output", stdout: "[one][two][three][long text]" },
+    explanation:
+      "プロパティファイルでは、キーと値の区切りに = だけでなく : や空白も使え、区切りの前後の空白は無視されます。そのため a = one、b:two、c three はどれもキーと値の組として読み込まれます。行末の \\ は行の継続を表し、次の行の先頭の空白を取り除いてつなげるので、d は long text になります。# や ! で始まる行はコメントです。リソース・バンドルのプロパティファイルは java.util.Properties と同じ規則で読まれるので、値の中で = や : を文字として使いたい場合や、行末に \\ を書きたい場合はエスケープが必要です。",
+  },
+
+  // ------------------------------------------------------------ タイムゾーンを伴う書式
+  {
+    id: 10834,
+    topic: "localization",
+    variantOf: "gold-localization-datetime-unsupported",
+    question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
+    className: "ZoneFormat",
+    code: [
+      "import java.time.*;",
+      "import java.time.format.*;",
+      "import java.util.*;",
+      "",
+      "public class ZoneFormat {",
+      "    public static void main(String[] args) {",
+      "        ZonedDateTime z = ZonedDateTime.of(2024, 1, 2, 3, 4, 0, 0, ZoneId.of(\"Asia/Tokyo\"));",
+      "        System.out.print(DateTimeFormatter.ofPattern(\"yyyy-MM-dd HH:mm VV xxx\").format(z) + \" | \");",
+      "        DateTimeFormatter full = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL).withLocale(Locale.US);",
+      "        System.out.println(full.format(z.toLocalDateTime()));",
+      "    }",
+      "}",
+    ],
+    choices: [
+      "2024-01-02 03:04 Asia/Tokyo +09:00 | と出力された後、DateTimeException がスローされる",
+      "2024-01-02 03:04 Asia/Tokyo +09:00 | Tuesday, January 2, 2024 at 3:04:00 AM",
+      "2024-01-02 03:04 JST +0900 | と出力された後、DateTimeException がスローされる",
+      "2024-01-02 03:04 Asia/Tokyo +09:00 | Tuesday, January 2, 2024 at 3:04:00 AM Japan Standard Time",
+      "8行目で DateTimeException がスローされる",
+    ],
+    correct: [0],
+    expected: { kind: "exception", type: "DateTimeException", stdout: "2024-01-02 03:04 Asia/Tokyo +09:00 |" },
+    explanation:
+      "パターン文字 VV はタイムゾーン ID（Asia/Tokyo）、xxx は UTC からの時差（+09:00）を表し、ZonedDateTime はこれらの情報を持っているので書式化できます。一方 ofLocalizedDateTime の FULL（と LONG）スタイルは、ロケールによってはタイムゾーン名を含む書式になるため、タイムゾーンを持たない LocalDateTime を渡すと「ZoneId を取り出せない」という DateTimeException がスローされます。MEDIUM や SHORT ならタイムゾーンを含まないので LocalDateTime でも書式化できます。日時を詳しく表示するなら、タイムゾーンを伴う ZonedDateTime で扱うのが確実です。",
+  },
+  {
+    id: 10835,
+    topic: "localization",
+    variantOf: "gold-localization-string-format",
+    question: "次のコードをコンパイルおよび実行した場合の結果はどれか。1つ選びなさい。",
+    className: "FormatLocale",
+    code: [
+      "import java.util.*;",
+      "",
+      "public class FormatLocale {",
+      "    public static void main(String[] args) {",
+      "        String a = String.format(Locale.GERMANY, \"%,.2f\", 1234.5);",
+      "        String b = String.format(Locale.US, \"%08.3f|%-5s|%5s|\", 3.14159, \"ab\", \"cd\");",
+      "        System.out.println(a + \" \" + b);",
+      "    }",
+      "}",
+    ],
+    choices: [
+      "1.234,50 0003.142|ab   |   cd|",
+      "1,234.50 0003.142|ab   |   cd|",
+      "1.234,50 3.142000|ab   |   cd|",
+      "1.234,50 0003.142|   ab|cd   |",
+      "1.234,5 00003.14|ab   |   cd|",
+    ],
+    correct: [0],
+    expected: { kind: "output", stdout: "1.234,50 0003.142|ab   |   cd|" },
+    explanation:
+      "String.format の第 1 引数に Locale を渡すと、桁区切りや小数点の記号がそのロケールの慣習になります。%,.2f の , は桁区切りを入れる指定、.2 は小数点以下 2 桁なので、ドイツでは 1.234,50 です。%08.3f は小数点以下 3 桁で四捨五入し、全体（小数点を含む）を 8 桁の幅にして不足分を 0 で埋めるので 0003.142 です。%-5s は幅 5 で左寄せ、%5s は右寄せです。ロケールを省略するとデフォルトロケール（書式用のカテゴリ）が使われ、実行環境で結果が変わるので、ファイル出力など形式を固定したい処理では Locale.ROOT などを明示します。",
+  },
 ];
