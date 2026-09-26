@@ -1098,6 +1098,8 @@ h1,
 
 .choice-text {
   font-family: var(--font-mono);
+  /* 出力を問う選択肢は空白の数にも意味がある（String.format の桁埋めなど）ので、連続した空白を潰さずに表示する */
+  white-space: pre-wrap;
   word-break: break-word;
 }
 

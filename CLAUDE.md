@@ -218,7 +218,7 @@ JDK 前提のコマンドをそこに置くと自動デプロイが必ず失敗�
 ## その他
 
 - `className` は `code` 内の public クラス名と一致させる（検証時のファイル名になる）
-- 改行コードは既存ファイルに合わせる（`src/*.ts` は LF、`src/style.css` は CRLF）
+- 改行コードは既存ファイルに合わせる（`src/` 以下はいずれも LF）
 - Silver の問題ファイル（[src/silver/](src/silver/)）の構成:
   - `core.ts`: 各分野の中核問題（id 1-11）
   - `more.ts`: 分野を厚くする問題（id 12-37）

@@ -247,7 +247,7 @@ export const goldIoQuestions: GoldQuestion[] = [
       "    }",
       "}",
     ],
-    choices: ["BI B 1 ink 0", "BI BI 9 ink 7", "BI  9 ink 0", "BI B 9 ink 0", "BI BI 1 pen 5"],
+    choices: ["BI B 1 ink 0", "BI BI 9 ink 7", "BI BI 1 ink 0", "BI B 9 ink 0", "BI BI 1 pen 5"],
     correct: [0],
     expected: { kind: "output", stdout: "BI B 1 ink 0" },
     explanation:
