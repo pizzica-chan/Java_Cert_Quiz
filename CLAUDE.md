@@ -225,8 +225,9 @@ JDK 前提のコマンドをそこに置くと自動デプロイが必ず失敗�
   - `variants.ts` / `variants2.ts`: 既存論点の亜種（id 101-137）
   - `extra1.ts`: 論点を増やすための追加問題（id 201-）
   - `index.ts`: Silver 全問題の集約
-- Gold の問題ファイル（[src/gold/](src/gold/)）は分野ごとに 1 ファイルで、id は分野ごとに 100 ずつ区切る:
+- Gold の問題ファイル（[src/gold/](src/gold/)）は分野ごとに分け、id は分野ごとに 100 ずつ区切る:
   - `collections.ts`（10101-）/ `functional.ts`（10201-）/ `streams.ts`（10301-）/ `modules.ts`（10401-）
   - `concurrency.ts`（10501-）/ `io.ts`（10601-）/ `jdbc.ts`（10701-）/ `localization.ts`（10801-）
+  - `<分野>2.ts`: 各分野の追加問題（id は同じ分野の番号帯で、1 つ目のファイルの続きから振る）
   - `index.ts`: Gold 全問題の集約
   - 論点キーは `gold-<分野>-<論点>` の形にする（Silver のキーと衝突させない）

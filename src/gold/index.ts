@@ -10,7 +10,9 @@ import { goldIoQuestions2 } from "./io2";
 import { goldJdbcQuestions } from "./jdbc";
 import { goldJdbcQuestions2 } from "./jdbc2";
 import { goldLocalizationQuestions } from "./localization";
+import { goldLocalizationQuestions2 } from "./localization2";
 import { goldModulesQuestions } from "./modules";
+import { goldModulesQuestions2 } from "./modules2";
 import { goldStreamsQuestions } from "./streams";
 import { goldStreamsQuestions2 } from "./streams2";
 
@@ -23,6 +25,7 @@ export const goldQuestions: GoldQuestion[] = [
   ...goldStreamsQuestions,
   ...goldStreamsQuestions2,
   ...goldModulesQuestions,
+  ...goldModulesQuestions2,
   ...goldConcurrencyQuestions,
   ...goldConcurrencyQuestions2,
   ...goldIoQuestions,
@@ -30,4 +33,5 @@ export const goldQuestions: GoldQuestion[] = [
   ...goldJdbcQuestions,
   ...goldJdbcQuestions2,
   ...goldLocalizationQuestions,
+  ...goldLocalizationQuestions2,
 ];
