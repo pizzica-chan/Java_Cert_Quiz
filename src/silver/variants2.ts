@@ -563,7 +563,7 @@ export const variantQuestions2: SilverQuestion[] = [
     // 限定公開したパッケージを対象外のモジュールから参照するとコンパイルできないことを確認する
     moduleSetup: {
       sources: [
-        { module: "com.example.service", path: "module-info.java", content: ["module com.example.service {", "    exports com.example.service.api;", "    exports com.example.service.internal to com.example.admin;", "}"] },
+        { module: "com.example.service", path: "module-info.java", content: ["module com.example.service {", "    requires transitive java.sql;", "    exports com.example.service.api;", "    exports com.example.service.internal to com.example.admin;", "}"] },
         { module: "com.example.service", path: "com/example/service/api/Api.java", content: ["package com.example.service.api;", "", "public class Api {", "}"] },
         { module: "com.example.service", path: "com/example/service/internal/Internal.java", content: ["package com.example.service.internal;", "", "public class Internal {", "}"] },
         { module: "com.example.other", path: "module-info.java", content: ["module com.example.other {", "    requires com.example.service;", "}"] },

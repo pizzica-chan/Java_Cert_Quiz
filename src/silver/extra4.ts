@@ -264,14 +264,14 @@ export const extraQuestions4: SilverQuestion[] = [
       "}",
     ],
     choices: [
-      "Infinity と出力されたあと ArithmeticException がスローされる",
+      "Infinity と出力された後、ArithmeticException がスローされる",
       "Infinity 0 と出力される",
       "Infinity Infinity と出力される",
       "コンパイルエラーになる",
-      "0.0 と出力されたあと ArithmeticException がスローされる",
+      "0.0 と出力された後、ArithmeticException がスローされる",
     ],
     correct: [0],
-    expected: { kind: "exception", type: "ArithmeticException" },
+    expected: { kind: "exception", type: "ArithmeticException", stdout: "Infinity" },
     explanation:
       "浮動小数点数の除算は IEEE 754 に従い、0 で割ると例外ではなく Infinity（0.0 / 0.0 なら NaN）になります。一方、整数の除算に対応する値は存在しないため ArithmeticException が投げられます。浮動小数点が例外を投げないのは、数値計算では途中で停止するより無限大や NaN を伝播させて最後に判定する方が都合がよいという設計思想によるものです。同じ「0 で割る」という操作でも型によって結果が根本的に変わるため、除算前のゼロチェックは整数演算でこそ重要になります。",
   },

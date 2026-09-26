@@ -323,10 +323,10 @@ export const coreQuestions: SilverQuestion[] = [
     moduleSetup: {
       main: "com.example.client/com.example.client.Main",
       sources: [
-        { module: "com.example.lib", path: "module-info.java", content: ["module com.example.lib {", "    requires java.sql;", "    exports com.example.lib.api;", "}"] },
-        { module: "com.example.lib", path: "com/example/lib/api/Published.java", content: ["package com.example.lib.api;", "", "public class Published {", "}"] },
-        { module: "com.example.client", path: "module-info.java", content: ["module com.example.client {", "    requires com.example.lib;", "}"] },
-        { module: "com.example.client", path: "com/example/client/Main.java", content: ["package com.example.client;", "", "import com.example.lib.api.Published;", "", "public class Main {", "    public static void main(String[] args) {", "        new Published();", "        System.out.println(\"used\");", "    }", "}"] },
+        { module: "com.example.app", path: "module-info.java", content: ["module com.example.app {", "    requires java.sql;", "    exports com.example.app.api;", "}"] },
+        { module: "com.example.app", path: "com/example/app/api/Published.java", content: ["package com.example.app.api;", "", "public class Published {", "}"] },
+        { module: "com.example.client", path: "module-info.java", content: ["module com.example.client {", "    requires com.example.app;", "}"] },
+        { module: "com.example.client", path: "com/example/client/Main.java", content: ["package com.example.client;", "", "import com.example.app.api.Published;", "", "public class Main {", "    public static void main(String[] args) {", "        new Published();", "        System.out.println(\"used\");", "    }", "}"] },
       ],
     },
     explanation:

@@ -400,7 +400,7 @@ export const variantQuestions: SilverQuestion[] = [
       "    }",
       "}",
     ],
-    choices: ["2 3 null", "2 3 ", "3 2 null", "2 3 0", "実行時に NullPointerException がスローされる"],
+    choices: ["2 3 null", "2 0 null", "3 2 null", "2 3 0", "実行時に NullPointerException がスローされる"],
     correct: [0],
     expected: { kind: "output", stdout: "2 3 null" },
     explanation:
