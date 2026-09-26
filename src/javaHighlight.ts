@@ -298,3 +298,53 @@ export function highlightJava(
 
   return work.replace(/\x00PH(\d+)\x00/g, (_, index) => placeholders[Number(index)]!);
 }
+
+/**
+ * 各行のうちテキスト・ブロック（"""〜"""）に含まれる文字の範囲を返す（含まれない行は null）。
+ * highlightJava は 1 行ずつ処理するため、行をまたぐテキスト・ブロックの中身を文字列と判定できない。
+ * そこで先に全行を走査して範囲を求め、その部分だけ文字列として色付けする。
+ */
+export function textBlockRanges(lines: string[]): Array<{ start: number; end: number } | null> {
+  const ranges: Array<{ start: number; end: number } | null> = [];
+  let inBlock = false;
+
+  for (const line of lines) {
+    let range: { start: number; end: number } | null = inBlock ? { start: 0, end: line.length } : null;
+    let pos = 0;
+    for (;;) {
+      const idx = line.indexOf('"""', pos);
+      if (idx < 0) break;
+      if (!inBlock) {
+        // 開始の """（その行の残りはテキスト・ブロックの一部）
+        range = { start: range?.start ?? idx, end: line.length };
+        inBlock = true;
+      } else {
+        // 終了の """ まで
+        range = { start: range?.start ?? 0, end: idx + 3 };
+        inBlock = false;
+      }
+      pos = idx + 3;
+    }
+    ranges.push(range);
+  }
+
+  return ranges;
+}
+
+/** 1 行を、テキスト・ブロックの範囲だけ文字列として、それ以外は通常どおりハイライトする */
+export function highlightJavaLine(
+  line: string,
+  lineNo: number,
+  braceDepth: number,
+  textBlock: { start: number; end: number } | null,
+): string {
+  if (!textBlock) return highlightJava(line, lineNo, null, null, braceDepth);
+  const before = line.slice(0, textBlock.start);
+  const inside = line.slice(textBlock.start, textBlock.end);
+  const after = line.slice(textBlock.end);
+  return (
+    (before ? highlightJava(before, lineNo, null, null, braceDepth) : "") +
+    (inside ? `<span class="tok-str">${escapeHtml(inside)}</span>` : "") +
+    (after ? highlightJava(after, lineNo, null, null, braceDepth) : "")
+  );
+}

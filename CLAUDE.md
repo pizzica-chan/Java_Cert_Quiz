@@ -7,16 +7,17 @@
 Oracle Certified Java Programmer の対策クイズアプリ。
 フロントエンド完結（TypeScript + Vite、バニラ DOM）。詳細は [README.md](README.md) 参照。
 
-収録している試験区分は 2 つで、画面上で切り替えて使う。
+収録している試験区分は 3 つで、画面上で切り替えて使う。
 
 | 試験区分 | 試験番号 | 検証に使う JDK | 問題の置き場所 |
 |---|---|---|---|
 | Silver SE 11 | 1Z0-815-JPN | 11 | [src/silver/](src/silver/) |
+| Silver SE 17 | 1Z0-825-JPN | 17 | [src/silver17/](src/silver17/)（Silver SE 11 の問題の流用＋SE 17 の新機能） |
 | Gold SE 17 | 1Z0-826-JPN | 17 | [src/gold/](src/gold/) |
 
 - 試験区分の設定（試験番号・JDK・出題数・制限時間・合格ライン・分野）は [src/quizTypes.ts](src/quizTypes.ts) の `EXAMS` にまとめている
 - [src/questions.ts](src/questions.ts) が全試験を結合する集約点。各問題に試験区分（`exam`）を付けて結合する。新しい試験区分はここに足す
-- 分野の型は試験区分ごとに分かれている（`SilverTopic` / `GoldTopic`）。キーは試験区分をまたいで重複しうる（`modules` など）ため、表示名は `topicMeta(exam, topic)` で引く
+- 分野の型は試験区分ごとに分かれている（`SilverTopic` / `Silver17Topic` / `GoldTopic`）。キーは試験区分をまたいで重複しうる（`modules` など）ため、表示名は `topicMeta(exam, topic)` で引く
 - 問題 ID と論点キー（`variantOf`）は試験区分をまたいで一意にする。ブックマーク・復習リストは ID で保存しているため
 
 このプロジェクトの価値は **「正解が実機で裏取りされていること」** にある。
@@ -32,7 +33,7 @@ Oracle Certified Java Programmer の対策クイズアプリ。
 
 ### 2. コードを伴う問題には必ず `expected` を書く
 
-`expected` は「この問題のコードを、試験区分の JDK（Silver は 11、Gold は 17）で実行したらこうなるはず」という宣言で、
+`expected` は「この問題のコードを、試験区分の JDK（Silver SE 11 は 11、Silver SE 17 と Gold SE 17 は 17）で実行したらこうなるはず」という宣言で、
 `npm run verify:java` が実機の出力と突き合わせる。これが正解の根拠になる。
 
 ```ts
@@ -102,6 +103,22 @@ moduleSetup: {
 - モジュールシステムは範囲内
 - SE 11 の言語機能（`var`、`String.repeat` / `strip` / `isBlank` など）は範囲内
 
+### Silver SE 17
+
+`Silver17Topic` は Oracle 公式の「試験内容チェックリスト」（Java SE 17 Programmer I / 1Z0-825-JPN）の 6 分野に対応している。
+
+- SE 11 から加わった範囲: switch 式、テキスト・ブロック、レコード、instanceof のパターン・マッチング、シール・クラス
+- **範囲外**: ラムダ式・関数型インタフェース、モジュール、日付・時刻 API、ArrayList 以外のコレクション（List.of、HashMap など）、Comparator
+- パターン・マッチングの switch は SE 17 ではプレビュー機能なので出題しない
+
+問題は 2 系統ある。
+
+- [src/silver17/fromSilver11.ts](src/silver17/fromSilver11.ts): Silver SE 11 の問題のうち SE 17 の範囲にも入るものを流用する。
+  ID は元の ID + 20000、論点キーは `s17-` + 元のキー。流用した問題も JDK 17 で改めて検証される。
+  Java のバージョンを名指しした記述や、JDK 17 で結果が変わる選択肢は `TEXT_OVERRIDES` で置き換える。
+  **Silver SE 11 に問題を追加・修正すると、Silver SE 17 にも自動で反映される**ので、SE 17 の範囲に入る問題なら JDK 17 でも成り立つように書く
+- [src/silver17/java17.ts](src/silver17/java17.ts): SE 17 で加わった言語機能の問題（id 21001-）。論点キーは `s17-<分野>-<論点>`
+
 ### Gold SE 17
 
 `GoldTopic` は Oracle 公式の「試験内容チェックリスト」（Java SE 17 Programmer II / 1Z0-826-JPN）の 8 分野に対応している。
@@ -169,7 +186,7 @@ npm run build                              # tsc → verify:java → vite build
 ```
 
 検証スクリプトは JDK 11 と JDK 17 を自動検出する（`JAVA11_HOME` / `JAVA17_HOME`、CI では setup-java の `JAVA_HOME_11_X64` / `JAVA_HOME_17_X64` でも指定可）。
-**Silver は 11、Gold は 17 で検証する。別のバージョンで代用しない。** 試験区分の Java のバージョンの仕様で正解が決まるため
+**Silver SE 11 は 11、Silver SE 17 と Gold SE 17 は 17 で検証する。別のバージョンで代用しない。** 試験区分の Java のバージョンの仕様で正解が決まるため
 （検出時に `java -version` を読んで確かめている）。
 
 JDBC の問題で使う H2 のドライバは、初回の検証時に Maven Central から取得し、SHA-1 を照合して `.java-lib/` に置く（Git 管理外）。

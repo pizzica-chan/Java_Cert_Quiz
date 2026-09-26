@@ -166,6 +166,7 @@ const LOCALE_FLAGS = ["-J-Duser.language=en", "-J-Duser.country=US"];
  */
 const RUNTIME_PROPS: Record<ExamId, string[]> = {
   silver11: ["-Dfile.encoding=UTF-8"],
+  silver17: ["-Dfile.encoding=UTF-8"],
   gold17: ["-Dfile.encoding=UTF-8", "-Duser.language=ja", "-Duser.country=JP", "-Duser.timezone=Asia/Tokyo"],
 };
 

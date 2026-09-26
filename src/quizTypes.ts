@@ -2,7 +2,7 @@
  * 収録している試験区分。
  * 試験区分ごとに Java のバージョン（＝検証に使う JDK）と出題範囲が異なる。
  */
-export type ExamId = "silver11" | "gold17";
+export type ExamId = "silver11" | "silver17" | "gold17";
 
 /**
  * 出題範囲（Oracle Certified Java Programmer, Silver SE 11 / 1Z0-815-JPN）。
@@ -23,6 +23,19 @@ export type SilverTopic =
   | "modules"; // モジュールシステム（module-info.java、requires / exports）
 
 /**
+ * 出題範囲（Oracle Certified Java Programmer, Silver SE 17 / 1Z0-825-JPN）。
+ * Oracle 公式の「試験内容チェックリスト」の 6 分野に対応させている。
+ * ラムダ式・モジュール・日付と時刻の API はチェックリストに無いので含めない（コレクションは ArrayList のみ）。
+ */
+export type Silver17Topic =
+  | "basics" // Java の概要と簡単なプログラムの作成（main、コンパイルと実行、パッケージと import）
+  | "datatypes" // 基本データ型と文字列の操作（変数とスコープ、var、文字列とテキスト・ブロック、配列、ArrayList）
+  | "control" // 演算子と制御構造（if / switch 文、switch 式、繰り返し、break / continue）
+  | "classes" // クラスの定義とインスタンスの使用（コンストラクタ、オーバーロード、static、アクセス修飾子、パターン・マッチング、レコード）
+  | "inheritance" // 継承とインタフェースの使用（抽象クラス、オーバーライド、キャスト、final クラス、インタフェース、シール・クラス）
+  | "exceptions"; // 例外処理（検査例外と非検査例外とエラー、try-catch、try-with-resources、カスタム例外、multi-catch）
+
+/**
  * 出題範囲（Oracle Certified Java Programmer, Gold SE 17 / 1Z0-826-JPN）。
  * Oracle 公式の「試験内容チェックリスト」の 8 分野に対応させている。
  */
@@ -37,7 +50,7 @@ export type GoldTopic =
   | "localization"; // ローカライズ（Locale、リソース・バンドル、メッセージ・日付・数値のフォーマット）
 
 /** 全試験区分の分野。キーは試験区分をまたいで重複しうる（例: "modules"）ので、表示名は試験区分ごとに引く */
-export type ExamTopic = SilverTopic | GoldTopic;
+export type ExamTopic = SilverTopic | Silver17Topic | GoldTopic;
 
 export interface TopicMeta {
   label: string;
@@ -56,6 +69,15 @@ export const SILVER_TOPIC_META: Record<SilverTopic, TopicMeta> = {
   api: { label: "標準 API", description: "List / ArrayList、日付・時刻 API など" },
   exceptions: { label: "例外処理", description: "try-catch-finally、検査例外、try-with-resources" },
   modules: { label: "モジュールシステム", description: "module-info.java、requires / exports、実行方法" },
+};
+
+export const SILVER17_TOPIC_META: Record<Silver17Topic, TopicMeta> = {
+  basics: { label: "Java の概要と簡単なプログラム", description: "main メソッド、コンパイルと実行、パッケージと import" },
+  datatypes: { label: "基本データ型と文字列", description: "変数とスコープ、var、文字列とテキスト・ブロック、配列、ArrayList" },
+  control: { label: "演算子と制御構造", description: "演算子、if / switch 文、switch 式、繰り返し、break / continue" },
+  classes: { label: "クラスとインスタンス", description: "コンストラクタ、オーバーロード、static、アクセス修飾子、パターン・マッチング、レコード" },
+  inheritance: { label: "継承とインタフェース", description: "抽象クラス、オーバーライド、キャスト、インタフェース、シール・クラス" },
+  exceptions: { label: "例外処理", description: "検査例外と非検査例外、try-with-resources、カスタム例外、multi-catch" },
 };
 
 export const GOLD_TOPIC_META: Record<GoldTopic, TopicMeta> = {
@@ -88,7 +110,11 @@ export interface ExamMeta<T extends ExamTopic = ExamTopic> {
 }
 
 /** 試験区分ごとの設定。本試験の形式（出題数・時間・合格ライン）は Oracle 公式の試験詳細に合わせる */
-export const EXAMS: { silver11: ExamMeta<SilverTopic>; gold17: ExamMeta<GoldTopic> } = {
+export const EXAMS: {
+  silver11: ExamMeta<SilverTopic>;
+  silver17: ExamMeta<Silver17Topic>;
+  gold17: ExamMeta<GoldTopic>;
+} = {
   silver11: {
     id: "silver11",
     name: "Silver SE 11",
@@ -98,6 +124,16 @@ export const EXAMS: { silver11: ExamMeta<SilverTopic>; gold17: ExamMeta<GoldTopi
     minutes: 180,
     passingRate: 0.63,
     topics: SILVER_TOPIC_META,
+  },
+  silver17: {
+    id: "silver17",
+    name: "Silver SE 17",
+    code: "1Z0-825-JPN",
+    jdk: 17,
+    questionCount: 60,
+    minutes: 90,
+    passingRate: 0.65,
+    topics: SILVER17_TOPIC_META,
   },
   gold17: {
     id: "gold17",
@@ -247,10 +283,13 @@ export interface QuestionData<T extends ExamTopic> {
 
 /** Silver SE 11 の問題データ */
 export type SilverQuestion = QuestionData<SilverTopic>;
+/** Silver SE 17 の問題データ */
+export type Silver17Question = QuestionData<Silver17Topic>;
 /** Gold SE 17 の問題データ */
 export type GoldQuestion = QuestionData<GoldTopic>;
 
 /** アプリが扱う問題。どの試験区分の問題かを exam で持つ（src/questions.ts で付与する） */
 export type Question =
   | (SilverQuestion & { exam: "silver11" })
+  | (Silver17Question & { exam: "silver17" })
   | (GoldQuestion & { exam: "gold17" });

@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: 22
 
-      # Silver SE 11 は JDK 11、Gold SE 17 は JDK 17 で検証する。
+      # Silver SE 11 は JDK 11、Silver SE 17 と Gold SE 17 は JDK 17 で検証する。
       # 複数指定すると JAVA_HOME_11_X64 / JAVA_HOME_17_X64 が設定され、検証スクリプトがそれを使う
       - uses: actions/setup-java@v4
         with:

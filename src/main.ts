@@ -1,5 +1,5 @@
 import "./style.css";
-import { computeBraceDepths, highlightJava } from "./javaHighlight";
+import { computeBraceDepths, highlightJavaLine, textBlockRanges } from "./javaHighlight";
 import {
   EXAM_IDS,
   EXAMS,
@@ -704,10 +704,11 @@ function openQuestionFromList(index: number): void {
 function renderCodeBlock(fileName: string, content: string[]): string {
   const isJava = fileName.endsWith(".java");
   const depths = computeBraceDepths(content);
+  const textBlocks = textBlockRanges(content);
   const lines = content
     .map((line, index) => {
       const lineNo = index + 1;
-      const html = isJava ? highlightJava(line, lineNo, null, null, depths[index]) : escapeHtml(line);
+      const html = isJava ? highlightJavaLine(line, lineNo, depths[index] ?? 1, textBlocks[index] ?? null) : escapeHtml(line);
       return `
         <div class="code-line" data-line="${lineNo}">
           <span class="line-no">${lineNo}</span>
