@@ -193,7 +193,7 @@ export const goldIoQuestions2: GoldQuestion[] = [
     choices: [
       "abc と出力された後、IOException がスローされる",
       "abc end",
-      " と出力された後、IOException がスローされる",
+      "何も出力されずに IOException がスローされる",
       "abcd end",
       "11行目でコンパイルエラーになる",
     ],
@@ -546,7 +546,7 @@ export const goldIoQuestions2: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "exception", type: "NoSuchFileException", stdout: "true true 5 false true" },
     explanation:
-      "Files.readAttributes にBasicFileAttributes.class を渡すと、種類・サイズ・日時などの基本的な属性を 1 回の問い合わせでまとめて取得できます。a.txt は通常のファイルで、サイズは 5 バイトです。存在しないファイルに対して exists は false、notExists は true を返します（アクセス権が無く判定できない場合は両方 false になるので、互いの否定ではありません）。一方 Files.size のように属性を読み取るメソッドは、ファイルが無いと 0 や -1 を返すのではなく NoSuchFileException をスローします。存在確認と読み取りの間にファイルが消えることもあるので、例外を前提にした処理にしておくのが安全です。",
+      "Files.readAttributes に BasicFileAttributes.class を渡すと、種類・サイズ・日時などの基本的な属性を 1 回の問い合わせでまとめて取得できます。a.txt は通常のファイルで、サイズは 5 バイトです。存在しないファイルに対して exists は false、notExists は true を返します（アクセス権が無く判定できない場合は両方 false になるので、互いの否定ではありません）。一方 Files.size のように属性を読み取るメソッドは、ファイルが無いと 0 や -1 を返すのではなく NoSuchFileException をスローします。存在確認と読み取りの間にファイルが消えることもあるので、例外を前提にした処理にしておくのが安全です。",
   },
   {
     id: 10635,

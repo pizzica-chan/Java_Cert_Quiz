@@ -66,7 +66,7 @@ export const goldCollectionsQuestions2: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "exception", type: "NullPointerException", stdout: "false" },
     explanation:
-      "ArrayList.contains(null) は要素に null が無いので false を返します。List.of で作った変更不可のリストは、null を要素に持てないだけでなく、contains や indexOf に null を渡した時点で NullPointerException をスローします（API ドキュメントで明記されている振る舞いです）。null が入り得ないコレクションに null を問い合わせるのは呼び出し側の誤りである可能性が高いので、黙って false を返すより早く失敗させる方針が取られています。ArrayList から List.of に書き換えただけで例外が出るようになることがあるので注意が必要です。",
+      "ArrayList.contains(null) は要素に null が無いので false を返します。List.of で作った変更不可のリストは、null を要素に持てないだけでなく、contains や indexOf に null を渡した時点で NullPointerException をスローします（Collection の仕様は、要素として受け付けない値を問い合わせたときに例外をスローすることを実装に認めています）。null が入り得ないコレクションに null を問い合わせるのは呼び出し側の誤りである可能性が高いので、黙って false を返すより早く失敗させる方針が取られています。ArrayList から List.of に書き換えただけで例外が出るようになることがあるので注意が必要です。",
   },
 
   // ------------------------------------------------------------ Arrays.asList
@@ -217,7 +217,7 @@ export const goldCollectionsQuestions2: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "2 true" },
     explanation:
-      "HashSet はまず hashCode で格納先のバケットを決め、同じバケットの中でだけ equals で重複を判定します。Point は equals だけをオーバーライドし hashCode は Object のまま（インスタンスごとに異なる値）なので、等しいはずの 2 つの Point が別のバケットに入り、重複と判定されずに 2 件になります。一方 ArrayList.contains は hashCode を使わず equals だけで先頭から比べるので true になります。「equals が true なら hashCode も等しい」という規約を破ると、ハッシュを使うコレクションだけが壊れるため、equals をオーバーライドしたら hashCode も必ずオーバーライドします（record ならこの両方が自動生成されます）。",
+      "HashSet はまず hashCode で格納先のバケットを決め、同じバケットの中でだけ equals で重複を判定します。Point は equals だけをオーバーライドし hashCode は Object のまま（通常はインスタンスごとに異なる値）なので、等しいはずの 2 つの Point が別のバケットに入り、重複と判定されずに 2 件になります。一方 ArrayList.contains は hashCode を使わず equals だけで先頭から比べるので true になります。「equals が true なら hashCode も等しい」という規約を破ると、ハッシュを使うコレクションだけが壊れるため、equals をオーバーライドしたら hashCode も必ずオーバーライドします（record ならこの両方が自動生成されます）。",
   },
   {
     id: 10132,
@@ -630,7 +630,7 @@ export const goldCollectionsQuestions2: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "exception", type: "ConcurrentModificationException", stdout: "[a, B, c, d]" },
     explanation:
-      "subList(1, 3) は元のリストのインデックス 1 以上 3 未満の範囲を示すビューで、sub への set は元のリストに反映されて [a, B, c, d] になります。ところがビューを作った後に元のリストの要素数を（ビューを経由せずに）変えると、ビューが指している範囲の意味が失われます。そのためその後にビューを使うと、ArrayList の subList は ConcurrentModificationException をスローします。サブリストは短命な作業用のビューとして使い、長く保持したいなら new ArrayList<>(list.subList(...)) でコピーします。",
+      "subList(1, 3) は元のリストのインデックス 1 以上 3 未満の範囲を示すビューで、sub への set は元のリストに反映されて [a, B, c, d] になります。ところがビューを作った後に元のリストの要素数を（ビューを経由せずに）変えると、ビューが指している範囲の意味が失われます。List の仕様ではこの後のビューの振る舞いは「未定義」とされており、ArrayList の subList は変更回数の食い違いを検出して、ビューを使った時点で ConcurrentModificationException をスローします。サブリストは短命な作業用のビューとして使い、長く保持したいなら new ArrayList<>(list.subList(...)) でコピーします。",
   },
 
   // ------------------------------------------------------------ LinkedHashMap

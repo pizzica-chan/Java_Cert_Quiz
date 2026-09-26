@@ -53,7 +53,7 @@ export const goldConcurrencyQuestions2: GoldQuestion[] = [
       "public class ScheduleTest {",
       "    public static void main(String[] args) throws Exception {",
       "        ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();",
-      "        ScheduledFuture<String> late = ses.schedule(() -> \"late\", 300, TimeUnit.MILLISECONDS);",
+      "        ScheduledFuture<String> late = ses.schedule(() -> \"late\", 1, TimeUnit.SECONDS);",
       "        ScheduledFuture<String> soon = ses.schedule(() -> \"soon\", 50, TimeUnit.MILLISECONDS);",
       "        System.out.print(late.isDone() + \" \");",
       "        System.out.print(soon.get() + \" \");",
@@ -66,7 +66,7 @@ export const goldConcurrencyQuestions2: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "false soon late" },
     explanation:
-      "ScheduledExecutorService.schedule は、指定した遅延の後にタスクを 1 回実行し、結果を ScheduledFuture で返します。タスクは登録した順ではなく実行予定時刻の順に実行されますが、ここでは各 Future から個別に結果を get しているので、出力は get を呼んだ順（soon → late）になります。直後の isDone は 300 ミリ秒経っていないので false です。定期実行には scheduleAtFixedRate（開始時刻の間隔を一定に保つ）や scheduleWithFixedDelay（前回の終了から一定の間隔をあける）を使います。",
+      "ScheduledExecutorService.schedule は、指定した遅延の後にタスクを 1 回実行し、結果を ScheduledFuture で返します。タスクは登録した順ではなく実行予定時刻の順に実行されますが、ここでは各 Future から個別に結果を get しているので、出力は get を呼んだ順（soon → late）になります。直後の isDone は 1 秒経っていないので false です。定期実行には scheduleAtFixedRate（開始時刻の間隔を一定に保つ）や scheduleWithFixedDelay（前回の終了から一定の間隔をあける）を使います。",
   },
 
   // ------------------------------------------------------------ CountDownLatch

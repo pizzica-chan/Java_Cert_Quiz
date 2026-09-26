@@ -57,7 +57,7 @@ export const goldStreamsQuestions2: GoldQuestion[] = [
       "    }",
       "}",
     ],
-    choices: ["da 2", "dacb 2", "dac 2", "da 3", " 2"],
+    choices: ["da 2", "dacb 2", "dac 2", "da 3", "dacb 3"],
     correct: [0],
     expected: { kind: "output", stdout: "da 2" },
     explanation:
@@ -382,7 +382,7 @@ export const goldStreamsQuestions2: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "6 acf" },
     explanation:
-      "2 引数の reduce(identity, accumulator) は、結果の型が要素の型と同じ場合にしか使えません（BinaryOperator<T> を取るため）。String のストリームから int の合計を作りたい場合は、3 引数の reduce(identity, accumulator, combiner) を使います。accumulator は「途中結果（Integer）と要素（String）」から新しい途中結果を作り、combiner は並列処理で分割された途中結果同士をまとめるために使われます（逐次ストリームでは呼ばれません）。文字数の合計は 2 + 3 + 1 = 6 です。8行目は結果も String なので 2 引数版で書け、各要素の先頭文字をつないで acf になります。実務では mapToInt(String::length).sum() と書くほうが読みやすいでしょう。",
+      "2 引数の reduce(identity, accumulator) は、結果の型が要素の型と同じ場合にしか使えません（BinaryOperator<T> を取るため）。String のストリームから int の合計を作りたい場合は、3 引数の reduce(identity, accumulator, combiner) を使います。accumulator は「途中結果（Integer）と要素（String）」から新しい途中結果を作り、combiner は並列処理で分割された途中結果同士をまとめるために使われます（逐次ストリームでは通常は使われませんが、並列でも正しく動くよう、accumulator と整合する関数を渡す必要があります）。文字数の合計は 2 + 3 + 1 = 6 です。8行目は結果も String なので 2 引数版で書け、各要素の先頭文字をつないで acf になります。実務では mapToInt(String::length).sum() と書くほうが読みやすいでしょう。",
   },
 
   // ------------------------------------------------------------ プリミティブ・ストリームの結果の型
@@ -724,7 +724,7 @@ export const goldStreamsQuestions2: GoldQuestion[] = [
       "",
       "public class MinMaxTest {",
       "    public static void main(String[] args) {",
-      "        Optional<String> longest = Stream.of(\"pear\", \"banana\", \"kiwi\", \"cherry\")",
+      "        Optional<String> longest = Stream.of(\"pear\", \"banana\", \"kiwi\", \"plum\")",
       "                .max(Comparator.comparing(String::length));",
       "        Optional<String> first = Stream.of(\"pear\", \"banana\", \"kiwi\")",
       "                .min(Comparator.naturalOrder());",
@@ -735,7 +735,7 @@ export const goldStreamsQuestions2: GoldQuestion[] = [
     ],
     choices: [
       "banana banana false",
-      "cherry banana false",
+      "pear banana false",
       "banana kiwi false",
       "banana banana と出力された後、NoSuchElementException がスローされる",
       "7行目でコンパイルエラーになる",
@@ -743,7 +743,7 @@ export const goldStreamsQuestions2: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "banana banana false" },
     explanation:
-      "Stream の max / min は Comparator を必ず受け取り、空のストリームに備えて Optional を返します。banana と cherry はどちらも長さ 6 で比較結果が等しいですが、max は等しい場合に先に現れた要素を返すため banana になります。min(Comparator.naturalOrder()) は辞書順で最小の banana です。空のストリームの max は空の Optional を返し、例外にはなりません。IntStream の max と違い、Stream<T> の max には要素の比較方法を知る手段が無いので、Comparator の指定が必須になっています。",
+      "Stream の max / min は Comparator を必ず受け取り、空のストリームに備えて Optional を返します。長さで比べた最大は 6 文字の banana です（比較結果が等しい要素が複数ある場合にどれを返すかは仕様で決まっていないので、同点になる比較で max / min の結果に頼るのは避けます）。min(Comparator.naturalOrder()) は辞書順で最小の banana です。空のストリームの max は空の Optional を返し、例外にはなりません。IntStream の max と違い、Stream<T> の max には要素の比較方法を知る手段が無いので、Comparator の指定が必須になっています。",
   },
 
   // ------------------------------------------------------------ Collectors の下流コレクタ（filtering / flatMapping / reducing）

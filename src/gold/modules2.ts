@@ -250,7 +250,7 @@ export const goldModulesQuestions2: GoldQuestion[] = [
       "    }",
       "}",
     ],
-    choices: ["false null true true", "true UnnamedTest false true", "false  true true", "false null true false", "3行目でコンパイルエラーになる"],
+    choices: ["false null true true", "true UnnamedTest false true", "false unnamed true true", "false null true false", "3行目でコンパイルエラーになる"],
     correct: [0],
     expected: { kind: "output", stdout: "false null true true" },
     explanation:
@@ -268,7 +268,7 @@ export const goldModulesQuestions2: GoldQuestion[] = [
       "2 Hello,Hi と出力される",
       "1 Hello と出力される",
       "同じサービスに 2 つの実装が登録されているため、実行時に ServiceConfigurationError がスローされる",
-      "com.example.app が実装モジュールを requires していないため、0  と出力される",
+      "com.example.app が実装モジュールを requires していないため、0 と出力される",
     ],
     correct: [0],
     expected: { kind: "output", stdout: "2 Hello,Hi" },
