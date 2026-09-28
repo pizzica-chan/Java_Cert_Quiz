@@ -311,7 +311,7 @@ export const goldMultiQuestions: GoldQuestion[] = [
     topic: "modules",
     variantOf: "gold-modules-multi-exports-opens",
     question:
-      "次のモジュール構成で、com.example.app/com.example.app.Main を実行すると api secret と出力される。この構成について正しい記述を2つ選びなさい。",
+      "次のモジュール構成で、com.example.app/com.example.app.Main を実行すると api secret denied と出力される。この構成について正しい記述を2つ選びなさい。",
     choices: [
       "com.example.app は、com.example.lib.api パッケージの public 型をコンパイル時に参照できる",
       "com.example.app は、リフレクションで com.example.lib.model パッケージの private フィールドを読める",
@@ -320,7 +320,7 @@ export const goldMultiQuestions: GoldQuestion[] = [
       "com.example.app は、リフレクションで com.example.lib.api パッケージの private フィールドも読める",
     ],
     correct: [0, 1],
-    expected: { kind: "output", stdout: "api secret" },
+    expected: { kind: "output", stdout: "api secret denied" },
     moduleSetup: {
       main: "com.example.app/com.example.app.Main",
       sources: [
@@ -329,7 +329,7 @@ export const goldMultiQuestions: GoldQuestion[] = [
           path: "module-info.java",
           content: ["module com.example.lib {", "    exports com.example.lib.api;", "    opens com.example.lib.model;", "}"],
         },
-        { module: "com.example.lib", path: "com/example/lib/api/Api.java", content: ["package com.example.lib.api;", "", "public class Api {", "    public static String name() {", "        return \"api\";", "    }", "}"] },
+        { module: "com.example.lib", path: "com/example/lib/api/Api.java", content: ["package com.example.lib.api;", "", "public class Api {", "    private static String key = \"k\";", "", "    public static String name() {", "        return \"api\";", "    }", "}"] },
         { module: "com.example.lib", path: "com/example/lib/model/Secret.java", content: ["package com.example.lib.model;", "", "public class Secret {", "    private String value = \"secret\";", "}"] },
         { module: "com.example.app", path: "module-info.java", content: ["module com.example.app {", "    requires com.example.lib;", "}"] },
         {
@@ -339,6 +339,7 @@ export const goldMultiQuestions: GoldQuestion[] = [
             "package com.example.app;",
             "",
             "import java.lang.reflect.Field;",
+            "import java.lang.reflect.InaccessibleObjectException;",
             "import com.example.lib.api.Api;",
             "",
             "public class Main {",
@@ -347,7 +348,15 @@ export const goldMultiQuestions: GoldQuestion[] = [
             "        Object secret = c.getConstructor().newInstance();",
             "        Field f = c.getDeclaredField(\"value\");",
             "        f.setAccessible(true);",
-            "        System.out.println(Api.name() + \" \" + f.get(secret));",
+            "        String key;",
+            "        try {",
+            "            Field k = Api.class.getDeclaredField(\"key\");",
+            "            k.setAccessible(true);",
+            "            key = (String) k.get(null);",
+            "        } catch (InaccessibleObjectException e) {",
+            "            key = \"denied\";",
+            "        }",
+            "        System.out.println(Api.name() + \" \" + f.get(secret) + \" \" + key);",
             "    }",
             "}",
           ],
@@ -355,7 +364,7 @@ export const goldMultiQuestions: GoldQuestion[] = [
       ],
     },
     explanation:
-      "exports と opens は別々の権限です。exports は指定したパッケージの public 型をコンパイル時と実行時の通常のアクセスに公開し、opens は実行時のリフレクションによるアクセス（private メンバーを含む深いリフレクション）を許可します。app は exports された api の Api をコンパイル時に参照でき、opens された model の Secret はリフレクションで生成して private フィールドを読めます。一方 model は exports されていないので import してコンパイル時に参照することはできず、api は opens されていないので private フィールドへの setAccessible は InaccessibleObjectException になります。フレームワーク向けに opens だけを付け、API として公開するパッケージには exports を付ける、と使い分けるための仕組みです。",
+      "exports と opens は別々の権限です。exports は指定したパッケージの public 型をコンパイル時と実行時の通常のアクセスに公開し、opens は実行時のリフレクションによるアクセス（private メンバーを含む深いリフレクション）を許可します。app は exports された api の Api をコンパイル時に参照でき、opens された model の Secret はリフレクションで生成して private フィールドを読めます。一方 model は exports されていないので import してコンパイル時に参照することはできません。また api は exports されていても opens されていないので、private フィールド key への setAccessible は InaccessibleObjectException になり、denied が出力されます。フレームワーク向けに opens だけを付け、API として公開するパッケージには exports を付ける、と使い分けるための仕組みです。",
   },
   {
     id: 10440,
