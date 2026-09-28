@@ -13,6 +13,7 @@ import { goldLocalizationQuestions } from "./localization";
 import { goldLocalizationQuestions2 } from "./localization2";
 import { goldModulesQuestions } from "./modules";
 import { goldModulesQuestions2 } from "./modules2";
+import { goldMultiQuestions } from "./multi";
 import { goldStreamsQuestions } from "./streams";
 import { goldStreamsQuestions2 } from "./streams2";
 
@@ -34,4 +35,5 @@ export const goldQuestions: GoldQuestion[] = [
   ...goldJdbcQuestions2,
   ...goldLocalizationQuestions,
   ...goldLocalizationQuestions2,
+  ...goldMultiQuestions,
 ];
