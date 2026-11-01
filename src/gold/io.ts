@@ -436,7 +436,7 @@ export const goldIoQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "exception", type: "FileAlreadyExistsException", stdout: "new" },
     explanation:
-      "Files.copy は、コピー先が既に存在すると既定では FileAlreadyExistsException をスローします。StandardCopyOption.REPLACE_EXISTING を指定したときだけ既存のファイルを置き換えるので、1 回目のコピーで dst.txt は new になります。オプションを付けない 2 回目のコピーは、コピー先があるため例外になります。既存のファイルを黙って上書きしないのを既定の動作にすることで、意図しないデータの消失を防いでいます。Files.move も同じ規則に従います。",
+      "Files.copy は、コピー先が既に存在すると既定では FileAlreadyExistsException をスローします。StandardCopyOption.REPLACE_EXISTING を指定したときだけ既存のファイルを置き換えるので、1 回目のコピーで dst.txt は new になります。オプションを付けない 2 回目のコピーは、コピー先があるため例外になります。既存のファイルがあれば上書きせずに例外を出すのを既定の動作にすることで、意図しないデータの消失を防いでいます。Files.move も同じ規則に従います。",
   },
   {
     id: 10615,

@@ -82,7 +82,7 @@ export const variantQuestions8: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "2" },
     explanation:
-      "finally の中に return を書くと、try で確定していた戻り値を上書きしてしまいます。そのため 1 ではなく 2 が返ります。さらに恐ろしいのは、try 内で例外が発生していた場合でも finally の return がそれを握りつぶし、呼び出し元は異常に気づけなくなる点です。finally は後始末のための場所であり、制御フローを変える構文を置くべきではありません。多くの静的解析ツールが finally 内の return を警告するのはこのためです。",
+      "finally の中に return を書くと、try で確定していた戻り値を上書きしてしまいます。そのため 1 ではなく 2 が返ります。さらに問題なのは、try 内で例外が発生していた場合でも finally の return がそれを握りつぶし、呼び出し元は異常に気づけなくなる点です。finally は後始末のための場所であり、制御フローを変える構文を置くべきではありません。多くの静的解析ツールが finally 内の return を警告するのはこのためです。",
   },
   {
     id: 604,

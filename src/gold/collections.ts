@@ -139,7 +139,7 @@ export const goldCollectionsQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "[a, bb, ccc]" },
     explanation:
-      "TreeSet は要素の重複を equals ではなく、比較器の compare が 0 を返すかどうかで判定します。この比較器は文字列の長さだけを比べるため、\"dd\" は先に追加された \"bb\" と長さが同じ＝重複とみなされ、追加されません。TreeSet / TreeMap は並べ替えのための比較結果を同一性の判定にも使う設計で、比較器が equals と矛盾すると要素が黙って消えます。同じ長さの文字列も区別したいなら thenComparing(Comparator.naturalOrder()) で順序を決めきる必要があります。",
+      "TreeSet は要素の重複を equals ではなく、比較器の compare が 0 を返すかどうかで判定します。この比較器は文字列の長さだけを比べるため、\"dd\" は先に追加された \"bb\" と長さが同じ＝重複とみなされ、追加されません。TreeSet / TreeMap は並べ替えのための比較結果を同一性の判定にも使う設計で、比較器が equals と矛盾すると要素が気づかないうちに消えます。同じ長さの文字列も区別したいなら thenComparing(Comparator.naturalOrder()) で順序を決めきる必要があります。",
   },
   {
     id: 10106,
@@ -356,7 +356,7 @@ export const goldCollectionsQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "exception", type: "IllegalArgumentException" },
     explanation:
-      "Map.of で作る変更不可のマップは、キーの重複を許さず、重複があると IllegalArgumentException をスローします。HashMap の put のように後勝ちで上書きしないのは、リテラル的に書いた定義に重複があるのはほぼ確実に記述ミスであり、黙って片方を捨てると発見しにくいバグになるからです。同様に Map.of / List.of / Set.of は null の要素・キー・値も拒否します（NullPointerException）。変更不可コレクションのファクトリは「作った瞬間に不正を検出する」方針で設計されています。",
+      "Map.of で作る変更不可のマップは、キーの重複を許さず、重複があると IllegalArgumentException をスローします。HashMap の put のように後勝ちで上書きしないのは、リテラル的に書いた定義に重複があるのはほぼ確実に記述ミスであり、知らせずに片方を捨てると発見しにくいバグになるからです。同様に Map.of / List.of / Set.of は null の要素・キー・値も拒否します（NullPointerException）。変更不可コレクションのファクトリは「作った瞬間に不正を検出する」方針で設計されています。",
   },
   {
     id: 10113,

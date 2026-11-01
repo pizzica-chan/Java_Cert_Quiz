@@ -804,6 +804,6 @@ export const goldMultiQuestions: GoldQuestion[] = [
     correct: [0, 1],
     expected: { kind: "output", stdout: "true ja_JP ja-JP ja" },
     explanation:
-      "Locale は作り方にかかわらず、言語や国などの値が同じなら equals で true になります。toString() は ja_JP のようにアンダースコアで区切った形式、toLanguageTag() は IETF の言語タグ（BCP 47）である ja-JP のようにハイフンで区切った形式を返します。forLanguageTag はハイフン区切りの言語タグを解釈するメソッドなので、\"ja_JP\" のようにアンダースコアで書くと正しく解釈できず、空のロケールになります。Locale.JAPANESE は言語 ja だけのロケールで、国を含む ja_JP は Locale.JAPAN です。2 つの形式を取り違えると、ロケールが静かに空になる不具合につながります。",
+      "Locale は作り方にかかわらず、言語や国などの値が同じなら equals で true になります。toString() は ja_JP のようにアンダースコアで区切った形式、toLanguageTag() は IETF の言語タグ（BCP 47）である ja-JP のようにハイフンで区切った形式を返します。forLanguageTag はハイフン区切りの言語タグを解釈するメソッドなので、\"ja_JP\" のようにアンダースコアで書くと正しく解釈できず、空のロケールになります。Locale.JAPANESE は言語 ja だけのロケールで、国を含む ja_JP は Locale.JAPAN です。2 つの形式を取り違えると、ロケールが気づかないうちに空になる不具合につながります。",
   },
 ];

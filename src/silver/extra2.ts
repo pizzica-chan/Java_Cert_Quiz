@@ -364,7 +364,7 @@ export const extraQuestions2: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "exception", type: "java.util.ConcurrentModificationException" },
     explanation:
-      "List に対する拡張 for 文は内部でイテレータを使い、イテレータは生成時点のリストの変更回数を記憶しています（配列の拡張 for は添字で走査し、イテレータは使いません）。ループ中にリスト側の remove を呼ぶと変更回数が食い違い、次の走査時に ConcurrentModificationException になります。これは「壊れた結果を黙って返すより、早く確実に失敗させる」というフェイルファストの設計です。要素を消しながら走査したい場合は、イテレータ自身の remove を使うか、removeIf を使います。名前に Concurrent とありますが、単一スレッドでも発生する点に注意してください。",
+      "List に対する拡張 for 文は内部でイテレータを使い、イテレータは生成時点のリストの変更回数を記憶しています（配列の拡張 for は添字で走査し、イテレータは使いません）。ループ中にリスト側の remove を呼ぶと変更回数が食い違い、次の走査時に ConcurrentModificationException になります。これは「おかしな結果を知らせずに返すより、早く確実に失敗させる」というフェイルファストの設計です。要素を消しながら走査したい場合は、イテレータ自身の remove を使うか、removeIf を使います。名前に Concurrent とありますが、単一スレッドでも発生する点に注意してください。",
   },
 
   // ============================================================ 配列 (arrays)

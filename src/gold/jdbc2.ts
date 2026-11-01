@@ -561,7 +561,7 @@ export const goldJdbcQuestions2: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "605" },
     explanation:
-      "createStatement に ResultSet.CONCUR_UPDATABLE を指定すると、ResultSet から直接データベースの行を更新できます。updateXxx は現在行の値を ResultSet 上で書き換えるだけで、updateRow を呼んだ時点で初めてデータベースに反映されます。id 2 の行は updateInt の後に updateRow を呼ばずに次の行へ移動したので、変更は捨てられて 200 のままです。行の追加は、特別な挿入行に moveToInsertRow で移動し、値を設定して insertRow を呼びます。合計は 105 + 200 + 300 = 605 です。SQL を組み立てずに済む反面、updateRow の呼び忘れで変更が黙って失われる点に注意します。",
+      "createStatement に ResultSet.CONCUR_UPDATABLE を指定すると、ResultSet から直接データベースの行を更新できます。updateXxx は現在行の値を ResultSet 上で書き換えるだけで、updateRow を呼んだ時点で初めてデータベースに反映されます。id 2 の行は updateInt の後に updateRow を呼ばずに次の行へ移動したので、変更は捨てられて 200 のままです。行の追加は、特別な挿入行に moveToInsertRow で移動し、値を設定して insertRow を呼びます。合計は 105 + 200 + 300 = 605 です。SQL を組み立てずに済む反面、updateRow の呼び忘れで変更が気づかないうちに失われる点に注意します。",
   },
   {
     id: 10734,
