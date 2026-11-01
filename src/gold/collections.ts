@@ -139,7 +139,7 @@ export const goldCollectionsQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "[a, bb, ccc]" },
     explanation:
-      "TreeSet は要素の重複を equals ではなく、比較器の compare が 0 を返すかどうかで判定します。この比較器は文字列の長さだけを比べるため、\"dd\" は先に追加された \"bb\" と長さが同じ＝重複とみなされ、追加されません。TreeSet / TreeMap は並べ替えのための比較結果を同一性の判定にも使う設計で、比較器が equals と矛盾すると要素が気づかないうちに消えます。同じ長さの文字列も区別したいなら thenComparing(Comparator.naturalOrder()) で順序を決めきる必要があります。",
+      "TreeSet は要素の重複を equals ではなく、比較器の compare が 0 を返すかどうかで判定します。この比較器は文字列の長さだけを比べるため、\"dd\" は先に追加された \"bb\" と長さが同じなので重複とみなされ、追加されません。TreeSet / TreeMap は並べ替えのための比較結果を同一性の判定にも使う設計で、比較器が equals と矛盾すると要素が気づかないうちに消えます。同じ長さの文字列も区別したいなら thenComparing(Comparator.naturalOrder()) で順序を決めきる必要があります。",
   },
   {
     id: 10106,

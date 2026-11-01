@@ -283,7 +283,7 @@ export const variantQuestions5: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "none" },
     explanation:
-      "switch に渡す前に null を判定しているため、例外は発生せず none が出力されます。String の switch は内部で対象のハッシュ値を求めるため null だと NullPointerException になりますが、このように事前に弾けば安全です。default があっても null は救えないので、null を取りうる値で分岐するときは必ず手前で確認します。逆に言えば、switch に到達した時点で値が非 null であることが保証される書き方にしておくと、分岐の意図が明確になります。",
+      "switch に渡す前に null を判定しているため、例外は発生せず none が出力されます。String の switch は内部で対象のハッシュ値を求めるため null だと NullPointerException になりますが、このように事前に弾けば安全です。default があっても null の場合には対応できないので、null を取りうる値で分岐するときは必ず手前で確認します。逆に言えば、switch に到達した時点で値が非 null であることが保証される書き方にしておくと、分岐の意図が明確になります。",
   },
   {
     id: 551,
