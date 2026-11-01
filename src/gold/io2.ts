@@ -446,7 +446,7 @@ export const goldIoQuestions2: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "exception", type: "FileAlreadyExistsException", stdout: "false A" },
     explanation:
-      "Files.move はファイルを移動（名前の変更）するので、移動元の a.txt は無くなり、c.txt が A の内容を持ちます。移動先に既にファイルがあると、既定では上書きせずに FileAlreadyExistsException をスローします。上書きしたい場合は StandardCopyOption.REPLACE_EXISTING を指定し、途中の状態を他から見せたくない場合は ATOMIC_MOVE を指定します。Files.copy も同じく既定では上書きしないので、「既存のファイルを黙って失わない」ことが Files の操作の基本方針だと覚えておくと混乱しません。",
+      "Files.move はファイルを移動（名前の変更）するので、移動元の a.txt は無くなり、c.txt が A の内容を持ちます。移動先に既にファイルがあると、既定では上書きせずに FileAlreadyExistsException をスローします。上書きしたい場合は StandardCopyOption.REPLACE_EXISTING を指定し、途中の状態を他から見せたくない場合は ATOMIC_MOVE を指定します。Files.copy も同じく既定では上書きしないので、「既存のファイルを知らないうちに失わない」ことが Files の操作の基本方針だと覚えておくと混乱しません。",
   },
   {
     id: 10632,

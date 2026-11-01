@@ -283,7 +283,7 @@ export const variantQuestions5: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "none" },
     explanation:
-      "switch に渡す前に null を判定しているため、例外は発生せず none が出力されます。String の switch は内部で対象のハッシュ値を求めるため null だと NullPointerException になりますが、このように事前に弾けば安全です。default があっても null は救えないので、null を取りうる値で分岐するときは必ず手前で確認します。逆に言えば、switch に到達した時点で値が非 null であることが保証される書き方にしておくと、分岐の意図が明確になります。",
+      "switch に渡す前に null を判定しているため、例外は発生せず none が出力されます。String の switch は内部で対象のハッシュ値を求めるため null だと NullPointerException になりますが、このように事前に弾けば安全です。default があっても null の場合には対応できないので、null を取りうる値で分岐するときは必ず手前で確認します。逆に言えば、switch に到達した時点で値が非 null であることが保証される書き方にしておくと、分岐の意図が明確になります。",
   },
   {
     id: 551,
@@ -428,7 +428,7 @@ export const variantQuestions5: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "2 3" },
     explanation:
-      "int[] a, b; と型側に角括弧を書くと、a も b も配列型になります。一方 int a[], b; と変数側に書いた場合は a だけが配列で b は int になってしまい、意図と食い違います。この差が、角括弧を型側に書く記法が推奨される理由です。宣言の左側だけを見れば型が分かる、という読みやすさは、複数の変数をまとめて宣言するときに特に効いてきます。そもそも 1 行に複数の変数を宣言しないのも、誤解を避ける有効な習慣です。",
+      "int[] a, b; と型側に角括弧を書くと、a も b も配列型になります。一方 int a[], b; と変数側に書いた場合は a だけが配列で b は int になってしまい、意図と食い違います。この差が、角括弧を型側に書く記法が推奨される理由です。宣言の左側だけを見れば型が分かる、という読みやすさは、複数の変数をまとめて宣言するときに特に役立ちます。そもそも 1 行に複数の変数を宣言しないのも、誤解を避ける有効な習慣です。",
   },
   {
     id: 557,

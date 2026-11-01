@@ -147,7 +147,7 @@ export const extraQuestions6: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "compile-error", line: 7 },
     explanation:
-      "int のリテラルや定数式は、値が byte の範囲に収まることをコンパイラが確認できる場合に限り、キャストなしで代入できます。10 も final int の 20 もコンパイル時に値が確定するため通ります。一方 7 行目の value は final ではない変数で、代入時点の値をコンパイラが保証できないためエラーになります。「実際の値が範囲内かどうか」ではなく「コンパイル時に確定しているか」が判断基準である点が要点で、final を外すだけで通っていたコードが壊れるのはこのためです。",
+      "int のリテラルや定数式は、値が byte の範囲に収まることをコンパイラが確認できる場合に限り、キャストなしで代入できます。10 も final int の 20 もコンパイル時に値が確定するため通ります。一方 7 行目の value は final ではない変数で、代入時点の値をコンパイラが保証できないためエラーになります。「実際の値が範囲内かどうか」ではなく「コンパイル時に確定しているか」が判断基準である点が要点で、final を外すだけで、それまで通っていたコードがコンパイルエラーになるのはこのためです。",
   },
   {
     id: 406,
@@ -338,7 +338,7 @@ export const extraQuestions6: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "exception", type: "NullPointerException" },
     explanation:
-      "String を使った switch は、内部で hashCode などを使って比較する仕組みのため、対象が null だとその時点で NullPointerException になります。default があっても捕まりません。default は「どの case にも一致しなかった場合」であって「値が無い場合」ではない、という区別が重要です。文字列で分岐する箇所では switch に渡す前に null を弾く必要があります。（参考: Java 21 以降の switch では case null が書けるが、本試験範囲の SE 11 では不可。）",
+      "String を使った switch は、内部で hashCode などを使って比較する仕組みのため、対象が null だとその時点で NullPointerException になります。default があっても捕まりません。default は「どの case にも一致しなかった場合」であって「値が無い場合」ではない、という区別が重要です。文字列で分岐する箇所では switch に渡す前に null を弾く必要があります。なお Java 21 以降の switch では case null を書けますが、本試験の範囲の SE 11 では書けません。",
   },
   {
     id: 413,

@@ -485,7 +485,7 @@ export const java17Questions: Silver17Question[] = [
     correct: [0],
     expected: { kind: "compile-error", line: 12 },
     explanation:
-      "レコードは暗黙に final であり、他のクラスから継承することはできないため、Square を extends した 12行目がコンパイルエラーになります。一方、インタフェースを implements することはできるので、6行目の Square implements Shape は問題ありません。レコードは java.lang.Record を暗黙に継承しているので、extends で別のクラスを継承することもできません。サブクラスで状態を追加されると、コンポーネントだけで等しさを判定する equals の前提が崩れてしまうため、継承を禁じているのです。",
+      "レコードは暗黙に final であり、ほかのクラスがレコードを継承することはできないため、Square を extends した 12行目がコンパイルエラーになります。一方、インタフェースを implements することはできるので、6行目の Square implements Shape は問題ありません。レコードは java.lang.Record を暗黙に継承しているので、extends で別のクラスを継承することもできません。サブクラスで状態を追加されると、コンポーネントだけで等しさを判定する equals の前提が崩れてしまうため、継承を禁じているのです。",
   },
   {
     id: 21028,

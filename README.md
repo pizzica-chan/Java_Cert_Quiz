@@ -1,7 +1,7 @@
 # Java 認定資格 対策クイズ
 
 Oracle Certified Java Programmer の出題範囲に沿った練習問題アプリです。
-フロントエンド完結（静的ファイルのみ）で動作します。
+フロントエンドだけで完結し、静的ファイルのみで動作します。
 
 次の 3 つの試験区分を収録しており、トップ画面で切り替えられます。
 
@@ -15,11 +15,11 @@ Oracle Certified Java Programmer の出題範囲に沿った練習問題アプ�
 
 ## 特徴
 
-- **正解を実機で検証している**（Silver SE 11 は JDK 11、Silver SE 17 と Gold SE 17 は JDK 17）
+- **正解を実機で検証しています**（Silver SE 11 は JDK 11、Silver SE 17 と Gold SE 17 は JDK 17）。
   コードを伴う問題は、ビルドのたびに実際の `javac` / `java` でコンパイル・実行し、
   「コンパイルが通るか」「実行結果が何か」を期待値と突き合わせています。
   人間の記憶ではなく処理系の出力が正解の根拠です。
-  Gold のモジュール構成・`jdeps`・ファイル I/O・JDBC（H2 Database で実際に SQL を実行）・リソース・バンドルの問題も実機で検証しています。
+  Gold のモジュール構成、`jdeps`、ファイル I/O、JDBC（H2 Database で実際に SQL を実行）、リソース・バンドルの問題も実機で検証しています。
 - 本試験と同じ選択式（単一選択 / 複数選択）。複数選択は部分点なし
 - 出題範囲の分野ごとに練習できる分野別モード
 - 制限時間つきの模擬試験モード（試験区分ごとに本試験と同じ出題数・制限時間・合格ラインを設定）
@@ -59,8 +59,8 @@ Oracle 公式の試験内容チェックリスト（Java SE 17 Programmer I）�
 | 継承とインタフェース | 抽象クラス、オーバーライド、キャスト、インタフェース、シール・クラス |
 | 例外処理 | 検査例外と非検査例外、try-with-resources、カスタム例外、multi-catch |
 
-Silver SE 11 の問題のうち SE 17 の範囲にも入るものを流用し（JDK 17 で改めて検証しています）、
-switch 式・テキスト・ブロック・レコード・パターン・マッチング・シール・クラスの問題を加えています。
+Silver SE 11 の問題のうち SE 17 の範囲にも入るものを流用し、JDK 17 で改めて検証しています。
+さらに、switch 式、テキスト・ブロック、レコード、パターン・マッチング、シール・クラスの問題を加えています。
 ラムダ式・モジュール・日付と時刻の API は Silver SE 17 の範囲外のため含めていません。
 
 ### Gold SE 17
@@ -92,7 +92,7 @@ Oracle 公式の試験内容チェックリスト（Java SE 17 Programmer II）�
 - **JDK 11 と JDK 17**（問題の検証に使用。Silver SE 11 は SE 11、Silver SE 17 と Gold SE 17 は SE 17 の仕様で検証するため、両方が必要）
 - インターネット接続（初回の検証時に、JDBC の問題で使う H2 Database のドライバを Maven Central から取得します）
 
-JDK が未導入の場合:
+JDK が未導入の場合は、次のコマンドでインストールできます。
 
 ```bash
 winget install EclipseAdoptium.Temurin.11.JDK
@@ -107,7 +107,7 @@ winget install EclipseAdoptium.Temurin.17.JDK
 npm install
 ```
 
-## 開発サーバー起動
+## 開発サーバーの起動
 
 ```bash
 npm run dev
@@ -138,10 +138,10 @@ Cloudflare Workers（静的アセット配信）にデプロイします。
 npm run deploy
 ```
 
-`npm run build`（JDK 実機検証込み）のあと `wrangler deploy` を実行します。事前に `npx wrangler login` が必要です。
+`npm run deploy` は、`npm run build`（JDK 実機検証込み）のあとに `wrangler deploy` を実行します。事前に `npx wrangler login` が必要です。
 
-Git push 連携の自動デプロイ（Cloudflare Workers Builds）も有効にしていますが、そのビルド環境には JDK が無いため、
-`wrangler.jsonc` の `build.command` は実機検証を含まない `npm run build:deploy`（`tsc && vite build` のみ）を使っています。
+Git push 連携の自動デプロイ（Cloudflare Workers Builds）も有効にしています。ただし、そのビルド環境には JDK が無いため、
+`wrangler.jsonc` の `build.command` には実機検証を含まない `npm run build:deploy`（`tsc && vite build` のみ）を指定しています。
 問題データの実機検証は手元の `npm run build` と、push/PR ごとに走る [.github/workflows/verify.yml](.github/workflows/verify.yml) で行います。
 
 ## 技術スタック

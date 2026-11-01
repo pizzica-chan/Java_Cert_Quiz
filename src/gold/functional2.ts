@@ -115,7 +115,7 @@ export const goldFunctionalQuestions2: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "compile-error", line: 9 },
     explanation:
-      "ローカル・クラスはメソッドのローカル変数を参照できますが、その変数は final か実質的に final（初期化後に一度も代入されない）でなければなりません。limit は11行目で再代入されているので実質的 final ではなく、それを参照している9行目がコンパイルエラーになります（エラーは代入側ではなく参照側で報告されます）。step は再代入されていないので8行目は問題なく、外側クラスのフィールド base もこの制約を受けません。ローカル・クラスのインスタンスはメソッドの終了後も生き残りうるため、参照したローカル変数は値としてコピーされます。後から値が変わるとコピーと食い違ってしまうので、変わらない変数だけを捕捉できる規則になっています。",
+      "ローカル・クラスはメソッドのローカル変数を参照できますが、その変数は final か実質的に final（初期化後に一度も代入されない）でなければなりません。limit は11行目で再代入されているので実質的 final ではなく、それを参照している9行目がコンパイルエラーになります（エラーは代入側ではなく参照側で報告されます）。step は再代入されていないので8行目は問題なく、外側クラスのフィールド base もこの制約を受けません。ローカル・クラスのインスタンスはメソッドの終了後も存在し続けることがあるため、参照したローカル変数は値としてコピーされます。後から値が変わるとコピーと食い違ってしまうので、変わらない変数だけを捕捉できる規則になっています。",
   },
   {
     id: 10220,
@@ -393,7 +393,7 @@ export const goldFunctionalQuestions2: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "6 1" },
     explanation:
-      "BiFunction には andThen だけがあり、compose はありません（2 つの引数を返す関数は存在しないので、前段に関数をつなげられないため）。repeat.andThen(len) は「repeat の結果を len に渡す」BiFunction で、\"ab\" を 3 回繰り返した \"ababab\" の長さ 6 を返します。String::repeat は「第 1 引数をレシーバ、第 2 引数をメソッドの引数」とする非 static メソッドの参照です。ToIntBiFunction は結果を int で返す特殊化で、\"b\".compareTo(\"a\") は文字コードの差の 1 を返します。",
+      "BiFunction には andThen だけがあり、compose はありません（2 つの引数をまとめて返す関数は書けないので、前段に関数をつなげられないため）。repeat.andThen(len) は「repeat の結果を len に渡す」BiFunction で、\"ab\" を 3 回繰り返した \"ababab\" の長さ 6 を返します。String::repeat は「第 1 引数をレシーバ、第 2 引数をメソッドの引数」とする非 static メソッドの参照です。ToIntBiFunction は結果を int で返す特殊化で、\"b\".compareTo(\"a\") は文字コードの差の 1 を返します。",
   },
 
   // ------------------------------------------------------------ コンストラクタ参照
@@ -525,7 +525,7 @@ export const goldFunctionalQuestions2: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "compile-error", line: 11 },
     explanation:
-      "ラムダ式の本体からスローできる検査例外は、実装する関数型インタフェースのメソッドの throws 節で宣言されたものに限られます。Callable.call() は throws Exception を宣言しているので10行目は問題ありませんが、Supplier.get() は検査例外を宣言していないため、load() の Exception を処理していない11行目はコンパイルエラーになります。main が throws Exception を宣言していても、ラムダ式の本体は main の中で実行されるわけではない（get が呼ばれたときに実行される）ので助けになりません。java.util.function のインタフェースで検査例外を扱うには、ラムダ式の中で catch して非検査例外に包むのが一般的です。",
+      "ラムダ式の本体からスローできる検査例外は、実装する関数型インタフェースのメソッドの throws 節で宣言されたものに限られます。Callable.call() は throws Exception を宣言しているので10行目は問題ありませんが、Supplier.get() は検査例外を宣言していないため、load() の Exception を処理していない11行目はコンパイルエラーになります。main が throws Exception を宣言していても、ラムダ式の本体は main の中で実行されるわけではない（get が呼ばれたときに実行される）ので、エラーは解消しません。java.util.function のインタフェースで検査例外を扱うには、ラムダ式の中で catch して非検査例外に包むのが一般的です。",
   },
 
   // ------------------------------------------------------------ 匿名クラス

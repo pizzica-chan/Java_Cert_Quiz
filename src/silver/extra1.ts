@@ -201,7 +201,7 @@ export const extraQuestions1: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "3 1 -3 -1" },
     explanation:
-      "整数同士の / は整数除算となり、小数部は切り捨てられます。切り捨ての方向は「0 に近づける」であり、-7 / 2 は -3.5 が -3 になります。% の結果は「被除数と同じ符号」になるよう定義されており -1 です。これは a == (a / b) * b + (a % b) という関係を保つためで、剰余の符号が除数に従う Math.floorMod とは異なります。負数を扱う剰余で偶奇判定や循環インデックスを計算すると符号で破綻することがあるため、Math.floorMod を使うと除数の符号に合わせた剰余が得られます。",
+      "整数同士の / は整数除算となり、小数部は切り捨てられます。切り捨ての方向は「0 に近づける」であり、-7 / 2 は -3.5 が -3 になります。% の結果は「被除数と同じ符号」になるよう定義されており -1 です。これは a == (a / b) * b + (a % b) という関係を保つためで、剰余の符号が除数に従う Math.floorMod とは異なります。負数を扱う剰余で偶奇判定や循環インデックスを計算すると負の値で誤った結果になることがあるため、Math.floorMod を使うと除数の符号に合わせた剰余が得られます。",
   },
   {
     id: 215,
@@ -286,7 +286,7 @@ export const extraQuestions1: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "output", stdout: "3 -1294967296" },
     explanation:
-      "double から int へのキャストは四捨五入ではなく、0 方向へ小数部を切り詰める（truncate toward zero）ため 3 になります。long から int へは値が int の範囲に収まっても暗黙変換できず、(int) が必要です。ここでは 3000000000 を狭めるとビット列が符号付き 32 ビットとして解釈され -1294967296 になります。byte / short / char への代入は、int / byte / short / char 型のコンパイル時定数で範囲内ならキャストなしでも通りますが、long や double の定数は値が収まっても不可です。この問題の double→int や long→int は明示的なキャストが要り、書いた時点で値の破損はプログラマの責任になります。正の小数を整数に丸めるなら (int) Math.round(d) も使えます（round(double) の戻り値は long なので、int へ入れるにはキャストが要ります）。",
+      "double から int へのキャストは四捨五入ではなく、0 方向へ小数部を切り詰める（truncate toward zero）ため 3 になります。long から int へは値が int の範囲に収まっても暗黙変換できず、(int) が必要です。ここでは 3000000000 を狭めるとビット列が符号付き 32 ビットとして解釈され -1294967296 になります。byte / short / char への代入は、int / byte / short / char 型のコンパイル時定数で範囲内ならキャストなしでも通りますが、long や double の定数は値が収まっても不可です。この問題の double→int や long→int は明示的なキャストが要り、書いた時点で、値が変わることはプログラマの責任になります。正の小数を整数に丸めるなら (int) Math.round(d) も使えます（round(double) の戻り値は long なので、int へ入れるにはキャストが要ります）。",
   },
   {
     id: 219,
@@ -312,7 +312,7 @@ export const extraQuestions1: SilverQuestion[] = [
     correct: [0],
     expected: { kind: "compile-error", line: 4 },
     explanation:
-      "boolean は他のどのプリミティブ型とも変換できません。キャストを書いてもコンパイルエラーになります。C 言語では 0 が偽、それ以外が真として整数と真偽値が地続きでしたが、Java はこれを断ち切りました。if (x = 1) のように代入式の型が boolean / Boolean 以外だとコンパイルエラーになります。代入式の型が boolean または Boolean なら if (flag = true) や if (a = b) のように条件に書けます。真偽値を数値にしたい場合は b ? 1 : 0 のように明示的に書く必要があります。",
+      "boolean は他のどのプリミティブ型とも変換できません。キャストを書いてもコンパイルエラーになります。C 言語では 0 が偽、それ以外が真として整数と真偽値を区別しませんでしたが、Java は両者を完全に分けました。if (x = 1) のように代入式の型が boolean / Boolean 以外だとコンパイルエラーになります。代入式の型が boolean または Boolean なら if (flag = true) や if (a = b) のように条件に書けます。真偽値を数値にしたい場合は b ? 1 : 0 のように明示的に書く必要があります。",
   },
   {
     id: 220,

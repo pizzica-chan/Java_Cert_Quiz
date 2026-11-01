@@ -275,7 +275,7 @@ export const goldStreamsQuestions: GoldQuestion[] = [
     correct: [0],
     expected: { kind: "exception", type: "IllegalStateException" },
     explanation:
-      "Collectors.toMap(キー関数, 値関数) は、キーが重複すると「Duplicate key」という IllegalStateException をスローします。\"aa\" と \"bb\" はどちらも長さ 2 なので、同じキーに 2 つの値が対応してしまいます。どちらを残すべきかはライブラリには判断できないため、黙って上書きせずに例外で知らせる設計です。キーが重複しうる場合は、第 3 引数にマージ関数（例: (a, b) -> a + b）を渡して、重複時の扱いを明示します。",
+      "Collectors.toMap(キー関数, 値関数) は、キーが重複すると「Duplicate key」という IllegalStateException をスローします。\"aa\" と \"bb\" はどちらも長さ 2 なので、同じキーに 2 つの値が対応してしまいます。どちらを残すべきかはライブラリには判断できないため、上書きせずに例外で知らせる設計です。キーが重複しうる場合は、第 3 引数にマージ関数（例: (a, b) -> a + b）を渡して、重複時の扱いを明示します。",
   },
   {
     id: 10311,
