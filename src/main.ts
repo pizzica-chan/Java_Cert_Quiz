@@ -41,10 +41,10 @@ interface AppState {
   listQuestions: Question[];
   listMode: ListMode;
   /**
-   * quiz 画面の「中断」で戻る先。検索結果やブックマークから開いた問題は
-   * 一覧へ戻し、通常の練習/模擬試験はトップへ戻す。
+   * quiz 画面の「中断」などで戻る先。検索結果やブックマークから開いた問題は
+   * 一覧へ戻し、結果画面から開いた見直しは結果画面へ戻し、通常の練習/模擬試験はトップへ戻す。
    */
-  quizReturnScreen: "start" | "list";
+  quizReturnScreen: "start" | "list" | "result";
 }
 
 // localStorage のキー。下の state の初期化で読み込むため、state より前に宣言しておく
@@ -816,8 +816,11 @@ function renderQuiz(): void {
       : `<span>${escapeHtml(topicLabel(question))}</span>`;
 
   const isLast = state.currentIndex === total - 1;
-  const isListSession = state.quizReturnScreen === "list";
+  const returnTo = state.quizReturnScreen;
   const bookmarked = state.bookmarks.has(question.id);
+  const quitLabel = returnTo === "list" ? "一覧へ" : returnTo === "result" ? "結果へ" : "中断";
+  const finishLabel =
+    returnTo === "list" ? "一覧に戻る" : returnTo === "result" ? "結果に戻る" : state.mode === "exam" ? "採点する" : "結果を見る";
 
   app.innerHTML = `
     <main class="container">
@@ -825,7 +828,7 @@ function renderQuiz(): void {
         <div class="quiz-meta">
           <span>Q ${state.currentIndex + 1} / ${total}</span>
           <span class="quiz-meta-actions">
-            <button class="btn-link" id="quit-btn" type="button">${isListSession ? "一覧へ" : "中断"}</button>
+            <button class="btn-link" id="quit-btn" type="button">${quitLabel}</button>
             ${timerHtml}
           </span>
         </div>
@@ -861,7 +864,7 @@ function renderQuiz(): void {
             state.mode === "practice" && !isChecked
               ? `<button class="btn btn-primary" id="check-btn" ${selected.length === 0 ? "disabled" : ""}>解答する</button>`
               : isLast
-                ? `<button class="btn btn-primary" id="finish-btn">${isListSession ? "一覧に戻る" : state.mode === "exam" ? "採点する" : "結果を見る"}</button>`
+                ? `<button class="btn btn-primary" id="finish-btn">${finishLabel}</button>`
                 : `<button class="btn btn-primary" id="next-btn">次の問題へ</button>`
           }
         </div>
@@ -878,7 +881,7 @@ function renderQuiz(): void {
 
   document.getElementById("quit-btn")!.addEventListener("click", () => {
     stopTimer();
-    state.screen = state.quizReturnScreen;
+    state.screen = returnTo;
     scrollToTop();
     render();
   });
@@ -904,14 +907,15 @@ function renderQuiz(): void {
     render();
   });
   document.getElementById("finish-btn")?.addEventListener("click", () => {
-    if (isListSession) {
-      stopTimer();
-      state.screen = "list";
-      scrollToTop();
-      render();
-    } else {
+    if (returnTo === "start") {
       finishExam();
+      return;
     }
+    // 一覧から開いた問題は一覧へ、採点後の見直しは結果画面へ戻す（採点し直して復習リストへの記録を重ねない）
+    stopTimer();
+    state.screen = returnTo;
+    scrollToTop();
+    render();
   });
 }
 
@@ -1032,7 +1036,9 @@ function renderResult(): void {
   document.querySelectorAll("[data-review]").forEach((el) => {
     el.addEventListener("click", () => {
       state.currentIndex = Number(el.getAttribute("data-review"));
-      state.checked[state.currentIndex] = true;
+      // 見直しでは全問を答え合わせ済みにし、採点後に選択を変えられないようにする
+      state.checked = state.checked.map(() => true);
+      state.quizReturnScreen = "result";
       state.screen = "quiz";
       scrollToTop();
       render();
