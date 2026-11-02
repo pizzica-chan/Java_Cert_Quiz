@@ -1,0 +1,29 @@
+---
+description: プロジェクト規約の正本は CLAUDE.md。問題追加・検証・デプロイ前に必ず参照する
+alwaysApply: true
+---
+
+# Java Cert Quiz — Cursor 向けガイド
+
+**規約の正本はリポジトリ直下の [CLAUDE.md](../../CLAUDE.md) のみ。**  
+`.cursor/rules/` は二重管理用のコピーを置かない。追加・変更は CLAUDE.md だけを更新する。
+
+## いつ読むか
+
+次に触れる**前に** @CLAUDE.md を読み、作業中・完了前も従う。
+
+- `src/silver/` などの問題データ、 `src/questions.ts`、`quizTypes.ts`
+- `expected` / `moduleSetup` / `runAsSourceFile` / `not-verifiable`
+- `npm run verify:java`・`npm run build`・`.github/workflows/verify.yml`
+- `wrangler.jsonc` の `build.command`（デプロイは Java なし環境）
+
+## 守るべき要点（詳細は CLAUDE.md）
+
+- 本試験の問題文・選択肢は転記しない（独自問題のみ）
+- コード付き問題には、試験区分の JDK（Silver SE 11 は 11、Silver SE 17 と Gold SE 17 は 17）の実機と突き合わせる `expected` を必ず書く
+- `not-verifiable` は原則使わず、全問実機検証を維持する
+- 試験区分ごとの出題範囲の外で出題しない（例: Stream API は Silver の範囲外）
+- 出力を問う問題は正解選択肢と `expected` の stdout を一致させる
+- デプロイ用ビルドを `npm run build`（Java 検証込み）に戻さない
+
+問題データを変更したら、手元で `npm run verify:java` または `npm run build` を通してから完了とする。
