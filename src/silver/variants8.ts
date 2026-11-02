@@ -111,7 +111,7 @@ export const variantQuestions8: SilverQuestion[] = [
       "    }",
       "}",
     ],
-    choices: ["broken", "null", "ConfigError", "throws が無いためコンパイルエラーになる", "実行時に ConfigError がスローされて終了する"],
+    choices: ["broken", "null", "ConfigError", "throws が無いためコンパイルエラーになる", "ConfigError が main で捕捉されずに異常終了する"],
     correct: [0],
     expected: { kind: "output", stdout: "broken" },
     explanation:
@@ -208,7 +208,7 @@ export const variantQuestions8: SilverQuestion[] = [
       "    }",
       "}",
     ],
-    choices: ["logged bad", "bad", "logged", "logged badbad", "logged と出力された後、IllegalArgumentException がスローされる"],
+    choices: ["logged bad", "bad", "logged", "logged badbad", "logged と出力された後、IllegalArgumentException が main で捕捉されずに異常終了する"],
     correct: [0],
     expected: { kind: "output", stdout: "logged bad" },
     explanation:
